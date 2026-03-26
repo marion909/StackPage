@@ -1,6 +1,6 @@
 import { HexColorPicker } from "react-colorful";
 import { useState } from "react";
-import type { Block, GalleryImage } from "../../../types/blocks";
+import type { Block, GalleryImage, NavLink, FooterLink, FormField } from "../../../types/blocks";
 import { useProjectStore } from "../../../stores/useProjectStore";
 import { nanoid } from "../../../types/nanoid";
 
@@ -210,6 +210,48 @@ export default function PropertiesPanel({ block, pageId, sectionId }: Props) {
           <Field label="Sticky">
             <Select value={String(block.props.sticky)} onChange={(v) => update({ sticky: v === "true" })} options={[{ label: "Yes", value: "true" }, { label: "No", value: "false" }]} />
           </Field>
+
+          {/* Nav links */}
+          <div className="mb-3">
+            <div className="flex items-center justify-between mb-1">
+              <span className="block text-[11px] font-medium text-[#64748b] uppercase tracking-wide">Links</span>
+              <button
+                onClick={() => {
+                  const link: NavLink = { id: nanoid(), label: "Link", href: "#" };
+                  update({ links: [...block.props.links, link] });
+                }}
+                className="text-[11px] text-[#2563eb] hover:underline font-medium"
+              >
+                + Add
+              </button>
+            </div>
+            <div className="space-y-1.5">
+              {block.props.links.length === 0 && (
+                <p className="text-[11px] text-[#94a3b8] italic">No links yet.</p>
+              )}
+              {block.props.links.map((link, idx) => (
+                <div key={link.id} className="border border-[#e2e8f0] rounded p-2 bg-[#f8fafc]">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[11px] font-medium text-[#374151]">Link {idx + 1}</span>
+                    <button
+                      onClick={() => update({ links: block.props.links.filter((_, i) => i !== idx) })}
+                      className="text-[11px] text-[#ef4444] hover:underline"
+                    >Remove</button>
+                  </div>
+                  <input
+                    type="text" placeholder="Label" value={link.label}
+                    onChange={(e) => update({ links: block.props.links.map((l, i) => i === idx ? { ...l, label: e.target.value } : l) })}
+                    className="w-full border border-[#d1d5db] rounded px-2 py-1 text-xs mb-1 focus:outline-none focus:ring-1 focus:ring-[#2563eb]"
+                  />
+                  <input
+                    type="text" placeholder="URL (e.g. #about or /about.html)" value={link.href}
+                    onChange={(e) => update({ links: block.props.links.map((l, i) => i === idx ? { ...l, href: e.target.value } : l) })}
+                    className="w-full border border-[#d1d5db] rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-[#2563eb]"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
         </>
       )}
 
@@ -230,6 +272,48 @@ export default function PropertiesPanel({ block, pageId, sectionId }: Props) {
           <Field label="Align">
             <Select value={block.props.align} onChange={(v) => update({ align: v })} options={ALIGN_OPTIONS} />
           </Field>
+
+          {/* Footer links */}
+          <div className="mb-3">
+            <div className="flex items-center justify-between mb-1">
+              <span className="block text-[11px] font-medium text-[#64748b] uppercase tracking-wide">Links</span>
+              <button
+                onClick={() => {
+                  const link: FooterLink = { id: nanoid(), label: "Link", href: "#" };
+                  update({ links: [...block.props.links, link] });
+                }}
+                className="text-[11px] text-[#2563eb] hover:underline font-medium"
+              >
+                + Add
+              </button>
+            </div>
+            <div className="space-y-1.5">
+              {block.props.links.length === 0 && (
+                <p className="text-[11px] text-[#94a3b8] italic">No links yet.</p>
+              )}
+              {block.props.links.map((link, idx) => (
+                <div key={link.id} className="border border-[#e2e8f0] rounded p-2 bg-[#f8fafc]">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[11px] font-medium text-[#374151]">Link {idx + 1}</span>
+                    <button
+                      onClick={() => update({ links: block.props.links.filter((_, i) => i !== idx) })}
+                      className="text-[11px] text-[#ef4444] hover:underline"
+                    >Remove</button>
+                  </div>
+                  <input
+                    type="text" placeholder="Label" value={link.label}
+                    onChange={(e) => update({ links: block.props.links.map((l, i) => i === idx ? { ...l, label: e.target.value } : l) })}
+                    className="w-full border border-[#d1d5db] rounded px-2 py-1 text-xs mb-1 focus:outline-none focus:ring-1 focus:ring-[#2563eb]"
+                  />
+                  <input
+                    type="text" placeholder="URL" value={link.href}
+                    onChange={(e) => update({ links: block.props.links.map((l, i) => i === idx ? { ...l, href: e.target.value } : l) })}
+                    className="w-full border border-[#d1d5db] rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-[#2563eb]"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
         </>
       )}
 
@@ -244,6 +328,68 @@ export default function PropertiesPanel({ block, pageId, sectionId }: Props) {
           <Field label="Recipient Email">
             <TextInput value={block.props.recipientEmail ?? ""} onChange={(v) => update({ recipientEmail: v })} />
           </Field>
+
+          {/* Form fields */}
+          <div className="mb-3">
+            <div className="flex items-center justify-between mb-1">
+              <span className="block text-[11px] font-medium text-[#64748b] uppercase tracking-wide">Form Fields</span>
+              <button
+                onClick={() => {
+                  const field: FormField = { id: nanoid(), label: "Field", type: "text", placeholder: "", required: false };
+                  update({ fields: [...block.props.fields, field] });
+                }}
+                className="text-[11px] text-[#2563eb] hover:underline font-medium"
+              >
+                + Add
+              </button>
+            </div>
+            <div className="space-y-2">
+              {block.props.fields.length === 0 && (
+                <p className="text-[11px] text-[#94a3b8] italic">No fields yet.</p>
+              )}
+              {block.props.fields.map((field, idx) => (
+                <div key={field.id} className="border border-[#e2e8f0] rounded p-2 bg-[#f8fafc]">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[11px] font-medium text-[#374151]">Field {idx + 1}</span>
+                    <button
+                      onClick={() => update({ fields: block.props.fields.filter((_, i) => i !== idx) })}
+                      className="text-[11px] text-[#ef4444] hover:underline"
+                    >Remove</button>
+                  </div>
+                  <input
+                    type="text" placeholder="Label" value={field.label}
+                    onChange={(e) => update({ fields: block.props.fields.map((f, i) => i === idx ? { ...f, label: e.target.value } : f) })}
+                    className="w-full border border-[#d1d5db] rounded px-2 py-1 text-xs mb-1 focus:outline-none focus:ring-1 focus:ring-[#2563eb]"
+                  />
+                  <input
+                    type="text" placeholder="Placeholder" value={field.placeholder ?? ""}
+                    onChange={(e) => update({ fields: block.props.fields.map((f, i) => i === idx ? { ...f, placeholder: e.target.value } : f) })}
+                    className="w-full border border-[#d1d5db] rounded px-2 py-1 text-xs mb-1 focus:outline-none focus:ring-1 focus:ring-[#2563eb]"
+                  />
+                  <div className="flex gap-1.5">
+                    <select
+                      value={field.type}
+                      onChange={(e) => update({ fields: block.props.fields.map((f, i) => i === idx ? { ...f, type: e.target.value as FormField["type"] } : f) })}
+                      className="flex-1 border border-[#d1d5db] rounded px-2 py-1 text-xs bg-white focus:outline-none focus:ring-1 focus:ring-[#2563eb]"
+                    >
+                      <option value="text">Text</option>
+                      <option value="email">Email</option>
+                      <option value="tel">Phone</option>
+                      <option value="textarea">Textarea</option>
+                    </select>
+                    <label className="flex items-center gap-1 text-[11px] text-[#374151] cursor-pointer">
+                      <input
+                        type="checkbox" checked={field.required}
+                        onChange={(e) => update({ fields: block.props.fields.map((f, i) => i === idx ? { ...f, required: e.target.checked } : f) })}
+                        className="rounded"
+                      />
+                      Required
+                    </label>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </>
       )}
 

@@ -4,7 +4,7 @@ import { createNewProject } from "../../types/project";
 import { useProjectStore } from "../../stores/useProjectStore";
 import { useEditorStore } from "../../stores/useEditorStore";
 import { useThemeStore } from "../../stores/useThemeStore";
-import { cmd_listProjects, cmd_loadProject, cmd_createProject, cmd_deleteProject, pickDirectory } from "../../lib/tauri";
+import { cmd_listProjects, cmd_loadProject, cmd_createProject, cmd_deleteProject, pickDirectory, pickFile } from "../../lib/tauri";
 import NewProjectDialog from "./NewProjectDialog";
 import ProjectCard from "./ProjectCard";
 
@@ -73,6 +73,20 @@ export default function Dashboard() {
     }
   }
 
+  async function handleOpenFromFile() {
+    try {
+      const filePath = await pickFile([{ name: "StackPage Project", extensions: ["json"] }]);
+      if (!filePath) return;
+      const project = await cmd_loadProject(filePath);
+      setProject(project as any);
+      if (project.theme) setTheme(project.theme as any);
+      setActivePageId(project.pages?.[0]?.id ?? null);
+      setView("editor");
+    } catch (e) {
+      setError(`Failed to open project file: ${e}`);
+    }
+  }
+
   // Dev/offline fallback: open a blank project without Tauri
   function handleNewProjectOffline(name: string, description: string) {
     const project = createNewProject(name, description);
@@ -93,12 +107,20 @@ export default function Dashboard() {
           <span className="font-semibold text-[#1e293b] text-lg">StackPage</span>
           <span className="text-xs text-[#64748b] bg-[#f1f5f9] px-2 py-0.5 rounded">v0.1</span>
         </div>
-        <button
-          onClick={() => setShowNew(true)}
-          className="bg-[#2563eb] hover:bg-[#1d4ed8] text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-        >
-          + New Project
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleOpenFromFile}
+            className="border border-[#e2e8f0] hover:border-[#2563eb] hover:text-[#2563eb] text-[#64748b] px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+          >
+            Open File…
+          </button>
+          <button
+            onClick={() => setShowNew(true)}
+            className="bg-[#2563eb] hover:bg-[#1d4ed8] text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+          >
+            + New Project
+          </button>
+        </div>
       </header>
 
       {/* Main */}

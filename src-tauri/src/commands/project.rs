@@ -121,7 +121,12 @@ pub fn save_project(project: serde_json::Value) -> Result<(), String> {
         fs::create_dir_all(parent).map_err(|e| e.to_string())?;
     }
     
-    fs::write(&file_path, content).map_err(|e| e.to_string())
+    fs::write(&file_path, content).map_err(|e| e.to_string())?;
+
+    // Register path so list_projects finds it even if stored outside default folder
+    register_project_path(&file_path);
+
+    Ok(())
 }
 
 #[tauri::command]

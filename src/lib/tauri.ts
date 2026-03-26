@@ -89,6 +89,12 @@ export async function pickDirectory(): Promise<string | null> {
   return null;
 }
 
+export async function pickFile(filters?: { name: string; extensions: string[] }[]): Promise<string | null> {
+  const result = await open({ directory: false, multiple: false, filters });
+  if (typeof result === "string") return result;
+  return null;
+}
+
 export async function pickSaveDir(title: string): Promise<string | null> {
   const result = await save({ title, filters: [] });
   if (typeof result === "string") return result;
