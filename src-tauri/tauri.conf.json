@@ -35,12 +35,8 @@
     ]
   },
   "plugins": {
-    "dialog": {},
     "fs": {
-      "scope": {
-        "allow": ["$HOME/Documents/StackPage/**", "$APPDATA/**", "$TEMP/**"],
-        "deny": []
-      }
+      "requireLiteralLeadingDot": false
     }
   }
 }
