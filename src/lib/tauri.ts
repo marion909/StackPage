@@ -38,8 +38,25 @@ export async function cmd_duplicateProject(
 
 // ─── Export Commands ───────────────────────────────────────────────────────
 
-export async function cmd_exportProject(project: Project, outputPath: string): Promise<void> {
-  return invoke<void>("export_project", { project, outputPath });
+export interface ExportFile {
+  relativePath: string;
+  content: string;
+}
+
+/** Write pre-generated files (HTML/CSS/JS) to the chosen output directory. */
+export async function cmd_writeExportFiles(
+  files: ExportFile[],
+  outputPath: string
+): Promise<void> {
+  return invoke<void>("write_export_files", { files, outputPath });
+}
+
+export async function cmd_copyAsset(
+  srcPath: string,
+  destRelative: string,
+  outputPath: string
+): Promise<void> {
+  return invoke<void>("copy_asset", { srcPath, destRelative, outputPath });
 }
 
 // ─── Deploy Commands ───────────────────────────────────────────────────────

@@ -1,3 +1,4 @@
+import React, { type ElementType } from "react";
 import type { HeadingBlock, HeadingBlockProps } from "../../types/blocks";
 
 interface Props {
@@ -6,7 +7,7 @@ interface Props {
   isEditing: boolean;
 }
 
-const TAG_MAP: Record<number, keyof JSX.IntrinsicElements> = {
+const TAG_MAP: Record<number, ElementType> = {
   1: "h1", 2: "h2", 3: "h3", 4: "h4", 5: "h5", 6: "h6",
 };
 
@@ -23,7 +24,7 @@ export default function HeadingBlock({ block, onChange, isEditing }: Props) {
     <Tag
       contentEditable={isEditing}
       suppressContentEditableWarning
-      onBlur={(e) => onChange({ text: e.currentTarget.textContent ?? "" })}
+      onBlur={(e: React.FocusEvent<HTMLElement>) => onChange({ text: e.currentTarget.textContent ?? "" })}
       style={{
         textAlign: align,
         color: color ?? "inherit",

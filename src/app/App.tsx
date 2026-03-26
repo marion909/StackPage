@@ -1,6 +1,6 @@
 import { useEditorStore } from "../stores/useEditorStore";
-import Dashboard from "./project/Dashboard";
-import EditorLayout from "./editor/EditorLayout";
+import Dashboard from "../components/project/Dashboard";
+import EditorLayout from "../components/editor/EditorLayout";
 
 export default function App() {
   const view = useEditorStore((s) => s.view);

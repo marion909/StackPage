@@ -8,7 +8,7 @@ interface Props {
 }
 
 export default function NavigationBlock({ block, onChange: _onChange, isEditing }: Props) {
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const [_mobileOpen, _setMobileOpen] = useState(false);
   const { logoText, logoImageSrc, logoType, links, sticky, backgroundColor, textColor } = block.props;
 
   return (

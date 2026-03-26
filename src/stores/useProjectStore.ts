@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import type { Project, Page, Section } from "../types/project";
 import type { Block } from "../types/blocks";
+import type { Theme } from "../types/theme";
 
 interface ProjectState {
   project: Project | null;
@@ -28,6 +29,9 @@ interface ProjectState {
   updateBlock: (pageId: string, sectionId: string, blockId: string, props: Partial<Block["props"]>) => void;
   deleteBlock: (pageId: string, sectionId: string, blockId: string) => void;
   reorderBlocks: (pageId: string, sectionId: string, orderedIds: string[]) => void;
+
+  // Theme
+  updateTheme: (theme: Theme) => void;
 }
 
 function touch(project: Project): Project {
@@ -239,6 +243,11 @@ export const useProjectStore = create<ProjectState>((set) => ({
             isDirty: true,
           }
         : s
+    ),
+
+  updateTheme: (theme) =>
+    set((s) =>
+      s.project ? { project: touch({ ...s.project, theme }), isDirty: true } : s
     ),
 
   reorderBlocks: (pageId, sectionId, orderedIds) =>

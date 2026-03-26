@@ -8,7 +8,7 @@ interface Props {
   isEditing: boolean;
 }
 
-export default function ContainerBlock({ block, onChange, isEditing }: Props) {
+export default function ContainerBlock({ block, onChange: _onChange, isEditing }: Props) {
   const { backgroundColor, paddingTop, paddingBottom, paddingLeft, paddingRight, maxWidth, children } = block.props;
 
   return (

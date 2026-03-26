@@ -1,17 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct ExportSettings {
-    output_type: String,
-    output_path: Option<String>,
-    minify: bool,
-    include_project_file: bool,
-}
-
-/// Main export command: receives the full project JSON and an output directory path.
 /// The actual HTML/CSS/JS generation is done in TypeScript (engine/export/).
 /// This command handles file system writes after receiving the pre-generated content.
 #[tauri::command]

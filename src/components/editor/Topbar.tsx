@@ -2,12 +2,6 @@ import { useProjectStore } from "../../stores/useProjectStore";
 import { useEditorStore } from "../../stores/useEditorStore";
 import { cmd_saveProject } from "../../lib/tauri";
 
-const PREVIEW_LABELS: Record<string, string> = {
-  desktop: "🖥",
-  tablet: "📱",
-  mobile: "📱",
-};
-
 export default function Topbar() {
   const project = useProjectStore((s) => s.project);
   const isDirty = useProjectStore((s) => s.isDirty);

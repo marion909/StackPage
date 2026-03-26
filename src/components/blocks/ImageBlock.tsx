@@ -6,7 +6,7 @@ interface Props {
   isEditing: boolean;
 }
 
-export default function ImageBlock({ block, onChange, isEditing }: Props) {
+export default function ImageBlock({ block, onChange: _onChange, isEditing }: Props) {
   const { src, alt, width, align, objectFit, borderRadius, caption } = block.props;
   const alignMap: Record<string, string> = { left: "flex-start", center: "center", right: "flex-end" };
 
