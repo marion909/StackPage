@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use std::collections::HashSet;
 use std::fs;
 use std::path::{Path, PathBuf};
 use uuid::Uuid;
@@ -34,34 +35,58 @@ pub struct ProjectJson {
 
 #[tauri::command]
 pub fn list_projects() -> Result<Vec<ProjectMeta>, String> {
-    // Search the user's home Documents/StackPage directory
-    let base = dirs_base()
-        .ok_or("Cannot determine user documents directory")?;
-    
-    let mut projects = Vec::new();
-    scan_for_projects(&base, &mut projects, 0)?;
-    
-    // Sort by updatedAt descending
+    let mut seen: HashSet<String> = HashSet::new();
+    let mut projects: Vec<ProjectMeta> = Vec::new();
+
+    // 1. Scan default Documents/StackPage folder
+    if let Some(base) = dirs_base() {
+        let _ = scan_for_projects(&base, &mut projects, &mut seen, 0);
+    }
+
+    // 2. Also load any paths registered outside the default folder
+    let registry = load_registry();
+    for path_str in registry {
+        if seen.contains(&path_str) { continue; }
+        let path = PathBuf::from(&path_str);
+        if path.exists() {
+            if let Ok(content) = fs::read_to_string(&path) {
+                if let Ok(proj) = serde_json::from_str::<ProjectJson>(&content) {
+                    seen.insert(path_str.clone());
+                    projects.push(ProjectMeta {
+                        id: proj.id,
+                        name: proj.name,
+                        description: proj.description,
+                        updated_at: proj.updated_at,
+                        file_path: path_str,
+                    });
+                }
+            }
+        }
+    }
+
     projects.sort_by(|a, b| b.updated_at.cmp(&a.updated_at));
     Ok(projects)
 }
 
-fn scan_for_projects(dir: &Path, out: &mut Vec<ProjectMeta>, depth: u32) -> Result<(), String> {
+fn scan_for_projects(dir: &Path, out: &mut Vec<ProjectMeta>, seen: &mut HashSet<String>, depth: u32) -> Result<(), String> {
     if depth > 3 { return Ok(()); }
     let entries = fs::read_dir(dir).map_err(|e| e.to_string())?;
     for entry in entries.flatten() {
         let path = entry.path();
         if path.is_dir() {
-            let _ = scan_for_projects(&path, out, depth + 1);
+            let _ = scan_for_projects(&path, out, seen, depth + 1);
         } else if path.file_name().and_then(|n| n.to_str()) == Some("stackpage.project.json") {
+            let path_str = path.to_string_lossy().to_string();
+            if seen.contains(&path_str) { continue; }
             if let Ok(content) = fs::read_to_string(&path) {
                 if let Ok(proj) = serde_json::from_str::<ProjectJson>(&content) {
+                    seen.insert(path_str.clone());
                     out.push(ProjectMeta {
                         id: proj.id,
                         name: proj.name,
                         description: proj.description,
                         updated_at: proj.updated_at,
-                        file_path: path.to_string_lossy().to_string(),
+                        file_path: path_str,
                     });
                 }
             }
@@ -164,13 +189,18 @@ pub fn create_project(
     let content = serde_json::to_string_pretty(&project).map_err(|e| e.to_string())?;
     fs::write(&file_path, content).map_err(|e| e.to_string())?;
     
+    // Register this project's path so list_projects can find it later
+    register_project_path(file_path.to_string_lossy().as_ref());
+
     Ok(project)
 }
 
 #[tauri::command]
 pub fn delete_project(file_path: String) -> Result<(), String> {
     // Only delete the project file, NOT the whole directory (safety)
-    fs::remove_file(&file_path).map_err(|e| e.to_string())
+    fs::remove_file(&file_path).map_err(|e| e.to_string())?;
+    unregister_project_path(&file_path);
+    Ok(())
 }
 
 #[tauri::command]
@@ -212,6 +242,8 @@ pub fn duplicate_project(
     let out = serde_json::to_string_pretty(&project).map_err(|e| e.to_string())?;
     fs::write(&new_file, out).map_err(|e| e.to_string())?;
     
+    register_project_path(&new_file.to_string_lossy());
+
     Ok(project)
 }
 
@@ -227,4 +259,50 @@ pub fn dirs_base() -> Option<PathBuf> {
         return Some(p);
     }
     None
+}
+
+// ─── Project registry ────────────────────────────────────────────────────
+// Stores absolute paths of all known project files so projects created in
+// arbitrary user-chosen directories still appear in list_projects().
+
+fn registry_path() -> Option<PathBuf> {
+    // Use APPDATA on Windows, XDG_CONFIG_HOME / HOME on Linux/macOS
+    let config_base = std::env::var_os("APPDATA")
+        .or_else(|| std::env::var_os("XDG_CONFIG_HOME"))
+        .or_else(|| std::env::var_os("HOME").map(|h| {
+            let mut p = PathBuf::from(h);
+            p.push(".config");
+            p.into_os_string()
+        }));
+    config_base.map(|base| PathBuf::from(base).join("StackPage").join("registry.json"))
+}
+
+fn load_registry() -> Vec<String> {
+    let path = match registry_path() { Some(p) => p, None => return Vec::new() };
+    if !path.exists() { return Vec::new(); }
+    let content = match fs::read_to_string(&path) { Ok(c) => c, Err(_) => return Vec::new() };
+    serde_json::from_str::<Vec<String>>(&content).unwrap_or_default()
+}
+
+fn save_registry(paths: &[String]) {
+    let path = match registry_path() { Some(p) => p, None => return };
+    if let Some(parent) = path.parent() {
+        let _ = fs::create_dir_all(parent);
+    }
+    if let Ok(json) = serde_json::to_string_pretty(paths) {
+        let _ = fs::write(&path, json);
+    }
+}
+
+fn register_project_path(file_path: &str) {
+    let mut reg = load_registry();
+    if !reg.iter().any(|p| p == file_path) {
+        reg.push(file_path.to_string());
+        save_registry(&reg);
+    }
+}
+
+fn unregister_project_path(file_path: &str) {
+    let reg: Vec<String> = load_registry().into_iter().filter(|p| p != file_path).collect();
+    save_registry(&reg);
 }

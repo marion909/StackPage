@@ -8,7 +8,7 @@ interface Props {
 }
 
 export default function NavigationBlock({ block, onChange: _onChange, isEditing }: Props) {
-  const [_mobileOpen, _setMobileOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const { logoText, logoImageSrc, logoType, links, sticky, backgroundColor, textColor } = block.props;
 
   return (
@@ -31,7 +31,7 @@ export default function NavigationBlock({ block, onChange: _onChange, isEditing 
         )}
 
         {/* Desktop links */}
-        <div style={{ display: "flex", gap: "24px", alignItems: "center" }}>
+        <div data-nav-links style={{ display: "flex", gap: "24px", alignItems: "center" }}>
           {links.map((link) => (
             <a
               key={link.id}
@@ -43,7 +43,44 @@ export default function NavigationBlock({ block, onChange: _onChange, isEditing 
             </a>
           ))}
         </div>
+
+        {/* Hamburger button (shown in editor as a visual indicator; functional in exported HTML via jsGenerator) */}
+        <button
+          data-hamburger
+          aria-label="Toggle menu"
+          onClick={() => setMobileOpen(!mobileOpen)}
+          style={{
+            display: "none", // hidden on desktop via CSS; jsGenerator toggles display on mobile
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            padding: "8px",
+            color: textColor,
+            flexDirection: "column",
+            gap: "5px",
+          }}
+        >
+          <span style={{ display: "block", width: "22px", height: "2px", backgroundColor: textColor, borderRadius: "2px", transition: "transform 0.2s", transform: mobileOpen ? "rotate(45deg) translate(5px, 5px)" : "none" }} />
+          <span style={{ display: "block", width: "22px", height: "2px", backgroundColor: textColor, borderRadius: "2px", opacity: mobileOpen ? 0 : 1, transition: "opacity 0.2s" }} />
+          <span style={{ display: "block", width: "22px", height: "2px", backgroundColor: textColor, borderRadius: "2px", transition: "transform 0.2s", transform: mobileOpen ? "rotate(-45deg) translate(5px, -5px)" : "none" }} />
+        </button>
       </div>
+
+      {/* Mobile menu (visible in editor when hamburger clicked in tablet/mobile preview) */}
+      {mobileOpen && (
+        <div style={{ backgroundColor, borderTop: "1px solid rgba(0,0,0,0.08)", padding: "8px 16px 16px" }}>
+          {links.map((link) => (
+            <a
+              key={link.id}
+              href={isEditing ? undefined : link.href}
+              onClick={isEditing ? (e) => e.preventDefault() : undefined}
+              style={{ display: "block", color: textColor, textDecoration: "none", fontSize: "0.95rem", fontWeight: 500, padding: "10px 0", borderBottom: "1px solid rgba(0,0,0,0.04)" }}
+            >
+              {link.label}
+            </a>
+          ))}
+        </div>
+      )}
     </nav>
   );
 }

@@ -1,7 +1,8 @@
 import { HexColorPicker } from "react-colorful";
 import { useState } from "react";
-import type { Block } from "../../../types/blocks";
+import type { Block, GalleryImage } from "../../../types/blocks";
 import { useProjectStore } from "../../../stores/useProjectStore";
+import { nanoid } from "../../../types/nanoid";
 
 interface Props {
   block: Block;
@@ -276,6 +277,75 @@ export default function PropertiesPanel({ block, pageId, sectionId }: Props) {
           <Field label="Show Captions">
             <Select value={String(block.props.showCaptions)} onChange={(v) => update({ showCaptions: v === "true" })} options={[{ label: "Yes", value: "true" }, { label: "No", value: "false" }]} />
           </Field>
+          <Field label="Border Radius (px)">
+            <NumberInput value={block.props.borderRadius ?? 0} onChange={(v) => update({ borderRadius: v || undefined })} min={0} max={50} />
+          </Field>
+
+          {/* Image list */}
+          <div className="mb-3">
+            <div className="flex items-center justify-between mb-1">
+              <span className="block text-[11px] font-medium text-[#64748b] uppercase tracking-wide">Images</span>
+              <button
+                onClick={() => {
+                  const newImage: GalleryImage = { id: nanoid(), src: "", alt: "", caption: "" };
+                  update({ images: [...block.props.images, newImage] });
+                }}
+                className="text-[11px] text-[#2563eb] hover:underline font-medium"
+              >
+                + Add
+              </button>
+            </div>
+            <div className="space-y-2">
+              {block.props.images.length === 0 && (
+                <p className="text-[11px] text-[#94a3b8] italic">No images yet. Click + Add.</p>
+              )}
+              {block.props.images.map((img, idx) => (
+                <div key={img.id} className="border border-[#e2e8f0] rounded p-2 bg-[#f8fafc]">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[11px] font-medium text-[#374151]">Image {idx + 1}</span>
+                    <button
+                      onClick={() => update({ images: block.props.images.filter((_, i) => i !== idx) })}
+                      className="text-[11px] text-[#ef4444] hover:underline"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Image URL"
+                    value={img.src}
+                    onChange={(e) => {
+                      const updated = block.props.images.map((im, i) => i === idx ? { ...im, src: e.target.value } : im);
+                      update({ images: updated });
+                    }}
+                    className="w-full border border-[#d1d5db] rounded px-2 py-1 text-xs mb-1 focus:outline-none focus:ring-1 focus:ring-[#2563eb]"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Alt text"
+                    value={img.alt}
+                    onChange={(e) => {
+                      const updated = block.props.images.map((im, i) => i === idx ? { ...im, alt: e.target.value } : im);
+                      update({ images: updated });
+                    }}
+                    className="w-full border border-[#d1d5db] rounded px-2 py-1 text-xs mb-1 focus:outline-none focus:ring-1 focus:ring-[#2563eb]"
+                  />
+                  {block.props.showCaptions && (
+                    <input
+                      type="text"
+                      placeholder="Caption (optional)"
+                      value={img.caption ?? ""}
+                      onChange={(e) => {
+                        const updated = block.props.images.map((im, i) => i === idx ? { ...im, caption: e.target.value } : im);
+                        update({ images: updated });
+                      }}
+                      className="w-full border border-[#d1d5db] rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-[#2563eb]"
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
         </>
       )}
     </div>
