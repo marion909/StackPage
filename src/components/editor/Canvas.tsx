@@ -1,15 +1,5 @@
 import {
-  DndContext,
-  closestCenter,
-  PointerSensor,
-  KeyboardSensor,
-  useSensor,
-  useSensors,
-  type DragEndEvent,
-} from "@dnd-kit/core";
-import {
   SortableContext,
-  sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { useProjectStore } from "../../stores/useProjectStore";
@@ -26,27 +16,11 @@ const PREVIEW_WIDTHS: Record<string, string> = {
 export default function Canvas() {
   const project = useProjectStore((s) => s.project);
   const addSection = useProjectStore((s) => s.addSection);
-  const reorderSections = useProjectStore((s) => s.reorderSections);
   const activePageId = useEditorStore((s) => s.activePageId);
   const previewMode = useEditorStore((s) => s.previewMode);
 
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
-  );
-
   const activePage = project?.pages.find((p) => p.id === activePageId);
   const sections = activePage?.sections ?? [];
-
-  function handleDragEnd(event: DragEndEvent) {
-    const { active, over } = event;
-    if (!over || active.id === over.id || !activePageId) return;
-    const oldIndex = sections.findIndex((s) => s.id === active.id);
-    const newIndex = sections.findIndex((s) => s.id === over.id);
-    const reordered = [...sections];
-    reordered.splice(newIndex, 0, reordered.splice(oldIndex, 1)[0]);
-    reorderSections(activePageId, reordered.map((s) => s.id));
-  }
 
   function handleAddSection() {
     if (!activePageId) return;
@@ -90,24 +64,18 @@ export default function Canvas() {
             </button>
           </div>
         ) : (
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
+          <SortableContext
+            items={sections.map((s) => s.id)}
+            strategy={verticalListSortingStrategy}
           >
-            <SortableContext
-              items={sections.map((s) => s.id)}
-              strategy={verticalListSortingStrategy}
-            >
-              {sections.map((section) => (
-                <SectionBlock
-                  key={section.id}
-                  section={section}
-                  pageId={activePageId}
-                />
-              ))}
-            </SortableContext>
-          </DndContext>
+            {sections.map((section) => (
+              <SectionBlock
+                key={section.id}
+                section={section}
+                pageId={activePageId}
+              />
+            ))}
+          </SortableContext>
         )}
 
         {sections.length > 0 && (

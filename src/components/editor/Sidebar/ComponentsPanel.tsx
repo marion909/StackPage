@@ -1,58 +1,37 @@
+import { useDraggable } from "@dnd-kit/core";
 import { BLOCK_TYPES, type BlockType } from "../../../types/blocks";
-import { nanoid } from "../../../types/nanoid";
 import { useProjectStore } from "../../../stores/useProjectStore";
 import { useEditorStore } from "../../../stores/useEditorStore";
 import { createNewSection } from "../../../types/project";
+import { createDefaultBlock } from "../../../lib/blockDefaults";
 
 const CATEGORIES = Array.from(new Set(BLOCK_TYPES.map((b) => b.category)));
 
-function createDefaultBlock(type: BlockType) {
-  const id = nanoid();
-  const defaults: Record<BlockType, object> = {
-    heading: { text: "Heading", level: 2, align: "left", fontWeight: "bold" },
-    text: { text: "Add your text here. Click to edit.", align: "left" },
-    button: { label: "Click here", href: "#", target: "_self", variant: "primary", align: "left", size: "md" },
-    image: { src: "", alt: "Image", width: 100, align: "center", objectFit: "cover" },
-    container: { paddingTop: 32, paddingBottom: 32, paddingLeft: 16, paddingRight: 16, children: [] },
-    "two-column": { gap: 24, leftWidth: 50, leftChildren: [], rightChildren: [], stackOnMobile: true, paddingTop: 32, paddingBottom: 32 },
-    "three-column": { gap: 24, col1Children: [], col2Children: [], col3Children: [], stackOnMobile: true, paddingTop: 32, paddingBottom: 32 },
-    gallery: { images: [], columns: 3, gap: 16, showCaptions: false },
-    "contact-form": {
-      fields: [
-        { id: nanoid(), label: "Name", type: "text", required: true },
-        { id: nanoid(), label: "Email", type: "email", required: true },
-        { id: nanoid(), label: "Message", type: "textarea", required: true },
-      ],
-      submitLabel: "Send Message",
-      successMessage: "Thank you! We'll be in touch soon.",
-      paddingTop: 48,
-      paddingBottom: 48,
-    },
-    footer: {
-      companyName: "Your Company",
-      copyrightText: `© ${new Date().getFullYear()} Your Company. All rights reserved.`,
-      links: [{ id: nanoid(), label: "Privacy", href: "#" }],
-      backgroundColor: "#1e293b",
-      textColor: "#94a3b8",
-      align: "center",
-      paddingTop: 32,
-      paddingBottom: 32,
-    },
-    navigation: {
-      logoText: "My Site",
-      logoType: "text",
-      links: [
-        { id: nanoid(), label: "Home", href: "index.html" },
-        { id: nanoid(), label: "About", href: "about.html" },
-        { id: nanoid(), label: "Contact", href: "contact.html" },
-      ],
-      sticky: false,
-      backgroundColor: "#ffffff",
-      textColor: "#1e293b",
-      showMobileMenu: true,
-    },
-  };
-  return { id, type, props: defaults[type] };
+interface PaletteItemProps {
+  blockType: BlockType;
+  label: string;
+  icon: string;
+  onClick: () => void;
+}
+
+function DraggablePaletteItem({ blockType, label, icon, onClick }: PaletteItemProps) {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    id: `palette--${blockType}`,
+    data: { type: "palette-item", blockType },
+  });
+
+  return (
+    <div
+      ref={setNodeRef}
+      {...listeners}
+      {...attributes}
+      onClick={onClick}
+      className={`flex flex-col items-center justify-center gap-1 p-2 rounded-lg border border-[#e2e8f0] hover:border-[#2563eb] hover:bg-[#eff6ff] transition-colors text-center cursor-grab active:cursor-grabbing${isDragging ? " opacity-40" : ""}`}
+    >
+      <span className="text-lg">{icon}</span>
+      <span className="text-[10px] text-[#374151] font-medium leading-tight">{label}</span>
+    </div>
+  );
 }
 
 export default function ComponentsPanel() {
@@ -77,8 +56,8 @@ export default function ComponentsPanel() {
       sectionId = page.sections[page.sections.length - 1].id;
     }
 
-    const block = createDefaultBlock(type) as any;
-    addBlock(activePageId, sectionId, block);
+    const block = createDefaultBlock(type);
+    addBlock(activePageId, sectionId, block as any);
     selectBlock(block.id, sectionId);
   }
 
@@ -91,15 +70,13 @@ export default function ComponentsPanel() {
           </h4>
           <div className="grid grid-cols-2 gap-1.5">
             {BLOCK_TYPES.filter((b) => b.category === cat).map((b) => (
-              <button
+              <DraggablePaletteItem
                 key={b.type}
+                blockType={b.type}
+                label={b.label}
+                icon={b.icon}
                 onClick={() => handleAddBlock(b.type)}
-                draggable
-                className="flex flex-col items-center justify-center gap-1 p-2 rounded-lg border border-[#e2e8f0] hover:border-[#2563eb] hover:bg-[#eff6ff] transition-colors text-center cursor-pointer"
-              >
-                <span className="text-lg">{b.icon}</span>
-                <span className="text-[10px] text-[#374151] font-medium leading-tight">{b.label}</span>
-              </button>
+              />
             ))}
           </div>
         </div>

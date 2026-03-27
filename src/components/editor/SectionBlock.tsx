@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { useSortable } from "@dnd-kit/sortable";
+import { useSortable, SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent, useDndMonitor } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { useProjectStore } from "../../stores/useProjectStore";
 import { useEditorStore } from "../../stores/useEditorStore";
@@ -9,6 +10,59 @@ import ComponentBlock from "./ComponentBlock";
 interface Props {
   section: Section;
   pageId: string;
+}
+
+/** Listens to the OUTER DndContext to detect palette-drag-over-this-section */
+function PaletteDropIndicator({ sectionId }: { sectionId: string }) {
+  const [isOver, setIsOver] = useState(false);
+  useDndMonitor({
+    onDragOver(event) {
+      const overId = event.over ? String(event.over.id) : null;
+      const activeId = String(event.active.id);
+      // Show indicator if a palette item is hovering over this section or any block in it
+      setIsOver(activeId.startsWith("palette--") && overId === sectionId);
+    },
+    onDragEnd() { setIsOver(false); },
+    onDragCancel() { setIsOver(false); },
+  });
+  if (!isOver) return null;
+  return (
+    <div className="absolute inset-0 bg-[#2563eb]/10 border-2 border-dashed border-[#2563eb] rounded pointer-events-none z-20 flex items-center justify-center">
+      <span className="text-[#2563eb] text-sm font-medium bg-white px-3 py-1 rounded shadow">Drop here</span>
+    </div>
+  );
+}
+
+function BlocksSortable({ section, pageId }: { section: Section; pageId: string }) {
+  const reorderBlocks = useProjectStore((s) => s.reorderBlocks);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } })
+  );
+
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const ids = section.blocks.map((b) => b.id);
+    const oldIdx = ids.indexOf(String(active.id));
+    const newIdx = ids.indexOf(String(over.id));
+    if (oldIdx === -1 || newIdx === -1) return;
+    const reordered = [...ids];
+    reordered.splice(newIdx, 0, reordered.splice(oldIdx, 1)[0]);
+    reorderBlocks(pageId, section.id, reordered);
+  }
+
+  return (
+    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+      <SortableContext items={section.blocks.map((b) => b.id)} strategy={verticalListSortingStrategy}>
+        <div className="flex flex-col gap-4">
+          {section.blocks.map((block) => (
+            <ComponentBlock key={block.id} block={block} pageId={pageId} sectionId={section.id} />
+          ))}
+        </div>
+      </SortableContext>
+    </DndContext>
+  );
 }
 
 export default function SectionBlock({ section, pageId }: Props) {
@@ -40,6 +94,8 @@ export default function SectionBlock({ section, pageId }: Props) {
       onMouseLeave={() => setHover(false)}
       onClick={() => selectBlock(null, section.id)}
     >
+      <PaletteDropIndicator sectionId={section.id} />
+
       {/* Section toolbar */}
       {(hover || isSelected) && (
         <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-2 py-1 bg-[#2563eb] z-10">
@@ -48,7 +104,7 @@ export default function SectionBlock({ section, pageId }: Props) {
               {...listeners}
               {...attributes}
               className="text-white/70 hover:text-white cursor-grab text-xs"
-              title="Drag to reorder"
+              title="Drag to reorder section"
               onClick={(e) => e.stopPropagation()}
             >
               ⠿ Section
@@ -88,19 +144,10 @@ export default function SectionBlock({ section, pageId }: Props) {
         >
           {section.blocks.length === 0 ? (
             <div className="border border-dashed border-[#e2e8f0] rounded-lg py-8 text-center text-xs text-[#94a3b8]">
-              Drop components here or use the Components panel
+              Drop components here or click in the Components panel
             </div>
           ) : (
-            <div className="flex flex-col gap-4">
-              {section.blocks.map((block) => (
-                <ComponentBlock
-                  key={block.id}
-                  block={block}
-                  pageId={pageId}
-                  sectionId={section.id}
-                />
-              ))}
-            </div>
+            <BlocksSortable section={section} pageId={pageId} />
           )}
         </div>
       </div>
