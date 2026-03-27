@@ -47,6 +47,7 @@ export default function Canvas() {
     <main className="flex-1 overflow-y-auto bg-[#f1f5f9] flex flex-col items-center py-6 px-4">
       {/* Canvas frame */}
       <div
+        data-canvas-root
         className="bg-white shadow-sm min-h-full transition-all duration-300"
         style={{ width: PREVIEW_WIDTHS[previewMode], maxWidth: "100%" }}
       >

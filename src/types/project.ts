@@ -6,8 +6,11 @@ import { nanoid } from "./nanoid";
 export interface Section {
   id: string;
   label?: string;
+  isGlobal?: boolean; // synced across all pages when changed
+  globalId?: string;  // unique identifier shared across all instances of this global section
   blocks: Block[];
   backgroundColor?: string;
+  backgroundImage?: string;
   paddingTop: number;
   paddingBottom: number;
   paddingLeft: number;
@@ -21,6 +24,10 @@ export interface Page {
   name: string;
   slug: string;
   title?: string;
+  metaDescription?: string;
+  ogTitle?: string;
+  ogDescription?: string;
+  ogImage?: string;
   sections: Section[];
   order: number;
 }
@@ -55,6 +62,10 @@ export interface Project {
   id: string;
   name: string;
   description?: string;
+  author?: string;
+  tags?: string[];
+  siteUrl?: string;
+  lang?: string; // HTML lang attribute, e.g. "en", "de"
   createdAt: string; // ISO 8601
   updatedAt: string;
   pages: Page[];
@@ -62,6 +73,7 @@ export interface Project {
   theme: Theme;
   exportSettings: ExportSettings;
   deploySettings?: DeploySettings;
+  thumbnail?: string; // base64 data URL, generated on save
   projectFilePath?: string;
 }
 
@@ -69,6 +81,9 @@ export interface ProjectMeta {
   id: string;
   name: string;
   description?: string;
+  author?: string;
+  tags?: string[];
+  thumbnail?: string;
   updatedAt: string;
   filePath: string;
 }

@@ -1,4 +1,5 @@
 import type { ButtonBlock, ButtonBlockProps } from "../../types/blocks";
+import { useThemeStore } from "../../stores/useThemeStore";
 
 interface Props {
   block: ButtonBlock;
@@ -14,10 +15,11 @@ const sizeClasses = {
 
 export default function ButtonBlock({ block, onChange, isEditing }: Props) {
   const { label, href, variant, align, size } = block.props;
+  const theme = useThemeStore((s) => s.theme);
 
   const baseStyle: React.CSSProperties = {
     display: "inline-block",
-    borderRadius: "8px",
+    borderRadius: `${theme.borderRadius}px`,
     fontWeight: 600,
     cursor: isEditing ? "default" : "pointer",
     textDecoration: "none",
@@ -25,9 +27,9 @@ export default function ButtonBlock({ block, onChange, isEditing }: Props) {
   };
 
   const variantStyle: Record<string, React.CSSProperties> = {
-    primary: { backgroundColor: "#2563eb", color: "#ffffff", border: "2px solid #2563eb" },
-    secondary: { backgroundColor: "#64748b", color: "#ffffff", border: "2px solid #64748b" },
-    outline: { backgroundColor: "transparent", color: "#2563eb", border: "2px solid #2563eb" },
+    primary: { backgroundColor: theme.primaryColor, color: "#ffffff", border: `2px solid ${theme.primaryColor}` },
+    secondary: { backgroundColor: theme.secondaryColor, color: "#ffffff", border: `2px solid ${theme.secondaryColor}` },
+    outline: { backgroundColor: "transparent", color: theme.primaryColor, border: `2px solid ${theme.primaryColor}` },
   };
 
   const alignStyle: Record<string, string> = { left: "flex-start", center: "center", right: "flex-end" };

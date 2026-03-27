@@ -10,6 +10,14 @@ import GalleryBlock from "./GalleryBlock";
 import ContactFormBlock from "./ContactFormBlock";
 import FooterBlock from "./FooterBlock";
 import NavigationBlock from "./NavigationBlock";
+import SlideBannerBlock from "./SlideBannerBlock";
+import DividerBlock from "./DividerBlock";
+import VideoBlock from "./VideoBlock";
+import HeroBlock from "./HeroBlock";
+import TestimonialBlock from "./TestimonialBlock";
+import PricingTableBlock from "./PricingTableBlock";
+import IconBlock from "./IconBlock";
+import MapBlock from "./MapBlock";
 
 interface Props {
   block: Block;
@@ -43,7 +51,24 @@ export default function BlockRenderer({ block, onPropChange, isEditing }: Props)
       return <FooterBlock block={block} onChange={change} isEditing={!!isEditing} />;
     case "navigation":
       return <NavigationBlock block={block} onChange={change} isEditing={!!isEditing} />;
+    case "slide-banner":
+      return <SlideBannerBlock block={block} onChange={change} isEditing={!!isEditing} />;
+    case "divider":
+      return <DividerBlock block={block} isEditing={!!isEditing} />;
+    case "video":
+      return <VideoBlock block={block} isEditing={!!isEditing} />;
+    case "hero":
+      return <HeroBlock block={block} isEditing={!!isEditing} />;
+    case "testimonial":
+      return <TestimonialBlock block={block} isEditing={!!isEditing} />;
+    case "pricing-table":
+      return <PricingTableBlock block={block} isEditing={!!isEditing} />;
+    case "icon":
+      return <IconBlock block={block} isEditing={!!isEditing} />;
+    case "map":
+      return <MapBlock block={block} isEditing={!!isEditing} />;
     default:
       return null;
   }
 }
+

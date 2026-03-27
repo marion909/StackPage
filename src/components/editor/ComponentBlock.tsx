@@ -1,8 +1,9 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useProjectStore } from "../../stores/useProjectStore";
 import { useEditorStore } from "../../stores/useEditorStore";
+import { usePresetsStore } from "../../stores/usePresetsStore";
 import type { Block } from "../../types/blocks";
 import BlockRenderer from "../blocks/BlockRenderer";
 
@@ -15,11 +16,16 @@ interface Props {
 export default function ComponentBlock({ block, pageId, sectionId }: Props) {
   const [hover, setHover] = useState(false);
   const deleteBlock = useProjectStore((s) => s.deleteBlock);
+  const duplicateBlock = useProjectStore((s) => s.duplicateBlock);
   const updateBlock = useProjectStore((s) => s.updateBlock);
   const selectedBlockId = useEditorStore((s) => s.selectedBlockId);
+  const selectedBlockIds = useEditorStore((s) => s.selectedBlockIds);
   const selectBlock = useEditorStore((s) => s.selectBlock);
+  const toggleBlockSelection = useEditorStore((s) => s.toggleBlockSelection);
+  const savePreset = usePresetsStore((s) => s.savePreset);
 
-  const isSelected = selectedBlockId === block.id;
+  const isSelected = selectedBlockIds.includes(block.id);
+  const isPrimary = selectedBlockId === block.id;
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: block.id,
@@ -40,13 +46,23 @@ export default function ComponentBlock({ block, pageId, sectionId }: Props) {
       ref={setNodeRef}
       style={style}
       className={`relative group border-2 rounded transition-colors cursor-pointer ${
-        isSelected ? "border-[#2563eb]" : hover ? "border-[#bfdbfe]" : "border-transparent"
+        isSelected
+          ? isPrimary
+            ? "border-[#2563eb]"
+            : "border-[#93c5fd]"
+          : hover
+          ? "border-[#bfdbfe]"
+          : "border-transparent"
       }`}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
       onClick={(e) => {
         e.stopPropagation();
-        selectBlock(block.id, sectionId);
+        if (e.shiftKey) {
+          toggleBlockSelection(block.id, sectionId);
+        } else {
+          selectBlock(block.id, sectionId);
+        }
       }}
     >
       {/* Block toolbar */}
@@ -60,15 +76,39 @@ export default function ComponentBlock({ block, pageId, sectionId }: Props) {
             className="opacity-70 hover:opacity-100 cursor-grab px-0.5"
             title="Drag to reorder"
           >
-            ⠿
+            â ¿
           </button>
           <span className="opacity-70 capitalize">{block.type}</span>
+          {selectedBlockIds.length > 1 && isPrimary && (
+            <span className="opacity-70 ml-0.5">[{selectedBlockIds.length}]</span>
+          )}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              duplicateBlock(pageId, sectionId, block.id);
+            }}
+            className="opacity-70 hover:opacity-100 ml-1"
+            title="Duplicate"
+          >
+            ⧉
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              const name = window.prompt("Preset name:", block.type);
+              if (name) savePreset(name.trim() || block.type, block);
+            }}
+            className="opacity-70 hover:opacity-100 ml-0.5"
+            title="Save as preset"
+          >
+            ☆
+          </button>
           <button
             onClick={(e) => {
               e.stopPropagation();
               deleteBlock(pageId, sectionId, block.id);
             }}
-            className="opacity-70 hover:opacity-100 ml-1"
+            className="opacity-70 hover:opacity-100 ml-0.5"
             title="Delete"
           >
             ×

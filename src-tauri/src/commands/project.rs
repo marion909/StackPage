@@ -13,6 +13,9 @@ pub struct ProjectMeta {
     pub id: String,
     pub name: String,
     pub description: Option<String>,
+    pub author: Option<String>,
+    pub tags: Option<Vec<String>>,
+    pub thumbnail: Option<String>,
     pub updated_at: String,
     pub file_path: String,
 }
@@ -25,6 +28,9 @@ pub struct ProjectJson {
     pub id: String,
     pub name: String,
     pub description: Option<String>,
+    pub author: Option<String>,
+    pub tags: Option<Vec<String>>,
+    pub thumbnail: Option<String>,
     pub created_at: String,
     pub updated_at: String,
     #[serde(flatten)]
@@ -56,6 +62,9 @@ pub fn list_projects() -> Result<Vec<ProjectMeta>, String> {
                         id: proj.id,
                         name: proj.name,
                         description: proj.description,
+                        author: proj.author,
+                        tags: proj.tags,
+                        thumbnail: proj.thumbnail,
                         updated_at: proj.updated_at,
                         file_path: path_str,
                     });
@@ -85,6 +94,9 @@ fn scan_for_projects(dir: &Path, out: &mut Vec<ProjectMeta>, seen: &mut HashSet<
                         id: proj.id,
                         name: proj.name,
                         description: proj.description,
+                        author: proj.author,
+                        tags: proj.tags,
+                        thumbnail: proj.thumbnail,
                         updated_at: proj.updated_at,
                         file_path: path_str,
                     });
@@ -119,6 +131,12 @@ pub fn save_project(project: serde_json::Value) -> Result<(), String> {
     // Ensure directory exists
     if let Some(parent) = Path::new(&file_path).parent() {
         fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+    }
+
+    // Backup previous save before overwriting
+    let bak_path = file_path.replace("stackpage.project.json", "stackpage.project.bak");
+    if Path::new(&file_path).exists() {
+        let _ = fs::copy(&file_path, &bak_path);
     }
     
     fs::write(&file_path, content).map_err(|e| e.to_string())?;

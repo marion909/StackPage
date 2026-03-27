@@ -9,7 +9,15 @@ export type BlockType =
   | "gallery"
   | "contact-form"
   | "footer"
-  | "navigation";
+  | "navigation"
+  | "slide-banner"
+  | "divider"
+  | "video"
+  | "hero"
+  | "testimonial"
+  | "pricing-table"
+  | "icon"
+  | "map";
 
 interface BaseBlock {
   id: string;
@@ -190,6 +198,172 @@ export interface NavigationBlock extends BaseBlock {
   props: NavigationProps;
 }
 
+export interface SlideItem {
+  id: string;
+  imageSrc: string;
+  imageAlt: string;
+  title?: string;
+  subtitle?: string;
+  ctaLabel?: string;
+  ctaHref?: string;
+  overlayColor?: string; // rgba
+  titleColor?: string;
+  subtitleColor?: string;
+}
+export interface SlideBannerProps {
+  slides: SlideItem[];
+  height: number; // px
+  autoplay: boolean;
+  autoplayInterval: number; // ms
+  showArrows: boolean;
+  showIndicators: boolean;
+  objectFit: "cover" | "contain" | "fill";
+  borderRadius?: number;
+}
+export interface SlideBannerBlock extends BaseBlock {
+  type: "slide-banner";
+  props: SlideBannerProps;
+}
+
+// ─── Divider / Spacer ─────────────────────────────────────────────────────
+export interface DividerBlockProps {
+  variant: "rule" | "spacer";
+  height: number;         // spacer height (px) or rule thickness (px)
+  color: string;          // rule color
+  lineStyle: "solid" | "dashed" | "dotted";
+  width: number;          // percentage of container
+  marginTop: number;
+  marginBottom: number;
+}
+export interface DividerBlock extends BaseBlock {
+  type: "divider";
+  props: DividerBlockProps;
+}
+
+// ─── Video ────────────────────────────────────────────────────────────────
+export interface VideoBlockProps {
+  url: string;
+  videoType: "youtube" | "vimeo" | "direct";
+  aspectRatio: "16/9" | "4/3" | "1/1";
+  controls: boolean;
+  autoplay: boolean;
+  muted: boolean;
+  loop: boolean;
+  borderRadius?: number;
+  align: "left" | "center" | "right";
+  width: number; // percentage
+}
+export interface VideoBlock extends BaseBlock {
+  type: "video";
+  props: VideoBlockProps;
+}
+
+// ─── Hero ─────────────────────────────────────────────────────────────────
+export interface HeroBlockProps {
+  heading: string;
+  subheading: string;
+  ctaLabel: string;
+  ctaHref: string;
+  ctaVariant: "primary" | "secondary" | "outline";
+  ctaSecondaryLabel: string;
+  ctaSecondaryHref: string;
+  backgroundImage: string;
+  backgroundColor: string;
+  overlayColor: string;
+  headingColor: string;
+  subheadingColor: string;
+  textAlign: "left" | "center" | "right";
+  paddingTop: number;
+  paddingBottom: number;
+  minHeight: number;
+}
+export interface HeroBlock extends BaseBlock {
+  type: "hero";
+  props: HeroBlockProps;
+}
+
+// ─── Testimonial ──────────────────────────────────────────────────────────
+export interface TestimonialItem {
+  id: string;
+  quote: string;
+  authorName: string;
+  authorTitle: string;
+  authorAvatar: string;
+  rating: number; // 0 = hidden, 1-5
+}
+export interface TestimonialBlockProps {
+  items: TestimonialItem[];
+  columns: 1 | 2 | 3;
+  backgroundColor?: string;
+  cardColor: string;
+  quoteColor: string;
+  authorColor: string;
+  showRating: boolean;
+  paddingTop: number;
+  paddingBottom: number;
+}
+export interface TestimonialBlock extends BaseBlock {
+  type: "testimonial";
+  props: TestimonialBlockProps;
+}
+
+// ─── Pricing Table ────────────────────────────────────────────────────────
+export interface PricingFeature {
+  id: string;
+  text: string;
+  included: boolean;
+}
+export interface PricingPlan {
+  id: string;
+  name: string;
+  price: string;
+  period: string;
+  description: string;
+  features: PricingFeature[];
+  ctaLabel: string;
+  ctaHref: string;
+  highlighted: boolean;
+  highlightColor: string;
+}
+export interface PricingTableProps {
+  plans: PricingPlan[];
+  backgroundColor?: string;
+  paddingTop: number;
+  paddingBottom: number;
+}
+export interface PricingTableBlock extends BaseBlock {
+  type: "pricing-table";
+  props: PricingTableProps;
+}
+
+// ─── Icon ─────────────────────────────────────────────────────────────────
+export interface IconBlockProps {
+  iconName: string;
+  size: number; // px
+  color: string;
+  align: "left" | "center" | "right";
+  label: string;
+  labelColor: string;
+  href: string;
+}
+export interface IconBlock extends BaseBlock {
+  type: "icon";
+  props: IconBlockProps;
+}
+
+// ─── Map ──────────────────────────────────────────────────────────────────
+export interface MapBlockProps {
+  embedUrl: string;
+  height: number;
+  borderRadius?: number;
+  align: "left" | "center" | "right";
+  width: number; // percentage
+}
+export interface MapBlock extends BaseBlock {
+  type: "map";
+  props: MapBlockProps;
+}
+
 export type Block =
   | HeadingBlock
   | TextBlock
@@ -201,7 +375,15 @@ export type Block =
   | GalleryBlock
   | ContactFormBlock
   | FooterBlock
-  | NavigationBlock;
+  | NavigationBlock
+  | SlideBannerBlock
+  | DividerBlock
+  | VideoBlock
+  | HeroBlock
+  | TestimonialBlock
+  | PricingTableBlock
+  | IconBlock
+  | MapBlock;
 
 // Block type display metadata
 export const BLOCK_TYPES: { type: BlockType; label: string; icon: string; category: string }[] = [
@@ -211,6 +393,14 @@ export const BLOCK_TYPES: { type: BlockType; label: string; icon: string; catego
   { type: "button", label: "Button", icon: "⏎", category: "Interactive" },
   { type: "image", label: "Image", icon: "🖼", category: "Media" },
   { type: "gallery", label: "Gallery", icon: "⊞", category: "Media" },
+  { type: "slide-banner", label: "Slide Banner", icon: "▷", category: "Media" },
+  { type: "video", label: "Video", icon: "▶", category: "Media" },
+  { type: "hero", label: "Hero", icon: "★", category: "Sections" },
+  { type: "testimonial", label: "Testimonial", icon: "❝", category: "Sections" },
+  { type: "pricing-table", label: "Pricing Table", icon: "₿", category: "Sections" },
+  { type: "icon", label: "Icon", icon: "◉", category: "Media" },
+  { type: "map", label: "Map", icon: "⊕", category: "Media" },
+  { type: "divider", label: "Divider", icon: "—", category: "Layout" },
   { type: "container", label: "Container", icon: "□", category: "Layout" },
   { type: "two-column", label: "2 Columns", icon: "⊟", category: "Layout" },
   { type: "three-column", label: "3 Columns", icon: "⊞", category: "Layout" },

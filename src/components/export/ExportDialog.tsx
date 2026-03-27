@@ -1,21 +1,64 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useProjectStore } from "../../stores/useProjectStore";
 import { useEditorStore } from "../../stores/useEditorStore";
 import { exportProject } from "../../engine/export/htmlGenerator";
-import { cmd_writeExportFiles, pickDirectory } from "../../lib/tauri";
+import { cmd_writeExportFiles, cmd_copyAsset, pickDirectory, openInBrowser } from "../../lib/tauri";
+import type { Project } from "../../types/project";
+
+function isLocalPath(src: string): boolean {
+  if (!src) return false;
+  if (src.startsWith("http://") || src.startsWith("https://") || src.startsWith("data:")) return false;
+  return true;
+}
+
+async function bundleLocalAssets(project: Project, outputPath: string) {
+  const seen = new Set<string>();
+  for (const page of project.pages) {
+    for (const section of page.sections) {
+      for (const block of section.blocks) {
+        const props = block.props as unknown as Record<string, unknown>;
+        // Collect candidate src fields
+        const candidates: string[] = [];
+        if (typeof props.src === "string") candidates.push(props.src);
+        if (typeof props.backgroundImage === "string") candidates.push(props.backgroundImage);
+        if (Array.isArray(props.slides)) {
+          for (const slide of props.slides as Array<Record<string, unknown>>) {
+            if (typeof slide.image === "string") candidates.push(slide.image);
+          }
+        }
+        for (const src of candidates) {
+          if (isLocalPath(src) && !seen.has(src)) {
+            seen.add(src);
+            // Copy to images/ subfolder in output, ignoring errors (file may not exist)
+            try {
+              const fileName = src.split(/[/\\]/).pop() ?? "image";
+              await cmd_copyAsset(src, `images/${fileName}`, outputPath);
+            } catch {
+              // Non-fatal: local asset not found or can't copy
+            }
+          }
+        }
+      }
+    }
+  }
+}
 
 type Step = "idle" | "exporting" | "done" | "error";
 
 export default function ExportDialog() {
   const project = useProjectStore((s) => s.project)!;
+  const updateProjectMeta = useProjectStore((s) => s.updateProjectMeta);
   const closeExport = useEditorStore((s) => s.closeExportDialog);
 
   const [outputPath, setOutputPath] = useState<string>(
     project.exportSettings.outputPath ?? ""
   );
+  const [siteUrl, setSiteUrl] = useState(project.siteUrl ?? "");
+  const [minify, setMinify] = useState(project.exportSettings.minify);
   const [step, setStep] = useState<Step>("idle");
   const [error, setError] = useState<string>("");
   const [fileCount, setFileCount] = useState(0);
+  const [lastOutputPath, setLastOutputPath] = useState("");
 
   async function handlePickDir() {
     const dir = await pickDirectory();
@@ -30,14 +73,26 @@ export default function ExportDialog() {
     setStep("exporting");
     setError("");
     try {
-      const files = exportProject(project);
-      await cmd_writeExportFiles(files, outputPath.trim());
-      setFileCount(files.length);
+      // Persist siteUrl + minify back to project
+      updateProjectMeta({ siteUrl: siteUrl.trim() || undefined });
+      const exportFiles = exportProject({ ...project, siteUrl: siteUrl.trim() || undefined, exportSettings: { ...project.exportSettings, minify } });
+      await cmd_writeExportFiles(exportFiles, outputPath.trim());
+
+      // Bundle local assets (images with non-http src)
+      await bundleLocalAssets(project, outputPath.trim());
+
+      setFileCount(exportFiles.length);
+      setLastOutputPath(outputPath.trim());
       setStep("done");
     } catch (e: unknown) {
       setError(String(e));
       setStep("error");
     }
+  }
+
+  async function handlePreview() {
+    const indexPath = lastOutputPath.replace(/\\/g, "/") + "/index.html";
+    await openInBrowser(indexPath);
   }
 
   return (
@@ -50,7 +105,7 @@ export default function ExportDialog() {
             onClick={closeExport}
             className="text-[#94a3b8] hover:text-[#1e293b] text-xl leading-none"
           >
-            ✕
+            âœ•
           </button>
         </div>
 
@@ -58,21 +113,29 @@ export default function ExportDialog() {
           <>
             <div className="flex flex-col items-center gap-3 py-4">
               <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center text-2xl">
-                ✓
+                âœ“
               </div>
               <p className="text-sm text-[#64748b] text-center">
                 {fileCount} file{fileCount !== 1 ? "s" : ""} exported successfully to:
               </p>
               <code className="text-xs bg-[#f1f5f9] px-3 py-2 rounded-lg break-all text-[#1e293b]">
-                {outputPath}
+                {lastOutputPath}
               </code>
             </div>
-            <button
-              onClick={closeExport}
-              className="w-full bg-[#2563eb] hover:bg-[#1d4ed8] text-white py-2.5 rounded-lg text-sm font-medium transition-colors"
-            >
-              Close
-            </button>
+            <div className="flex gap-3">
+              <button
+                onClick={handlePreview}
+                className="flex-1 border border-[#2563eb] text-[#2563eb] py-2.5 rounded-lg text-sm font-medium hover:bg-[#eff6ff] transition-colors"
+              >
+                Open in Browser
+              </button>
+              <button
+                onClick={closeExport}
+                className="flex-1 bg-[#2563eb] hover:bg-[#1d4ed8] text-white py-2.5 rounded-lg text-sm font-medium transition-colors"
+              >
+                Close
+              </button>
+            </div>
           </>
         ) : (
           <>
@@ -84,23 +147,44 @@ export default function ExportDialog() {
                   type="text"
                   value={outputPath}
                   onChange={(e) => setOutputPath(e.target.value)}
-                  placeholder="Choose a folder…"
+                  placeholder="Choose a folderâ€¦"
                   className="flex-1 border border-[#d1d5db] rounded-lg px-3 py-2 text-sm text-[#1e293b] focus:outline-none focus:ring-2 focus:ring-[#2563eb]/30 focus:border-[#2563eb]"
                 />
                 <button
                   onClick={handlePickDir}
                   className="px-3 py-2 border border-[#d1d5db] rounded-lg text-sm text-[#64748b] hover:bg-[#f1f5f9] transition-colors shrink-0"
                 >
-                  Browse…
+                  Browseâ€¦
                 </button>
               </div>
             </div>
 
+            {/* Site URL for sitemap */}
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-medium text-[#374151]">Site URL <span className="text-[#94a3b8] font-normal">(for sitemap.xml)</span></label>
+              <input
+                type="url"
+                value={siteUrl}
+                onChange={(e) => setSiteUrl(e.target.value)}
+                placeholder="https://example.com"
+                className="border border-[#d1d5db] rounded-lg px-3 py-2 text-sm text-[#1e293b] focus:outline-none focus:ring-2 focus:ring-[#2563eb]/30 focus:border-[#2563eb]"
+              />
+            </div>
+
+            {/* Minify option */}
+            <label className="flex items-center gap-3 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={minify}
+                onChange={(e) => setMinify(e.target.checked)}
+                className="w-4 h-4 accent-[#2563eb]"
+              />
+              <span className="text-sm text-[#374151]">Minify HTML &amp; CSS</span>
+            </label>
+
             {/* Info */}
             <div className="bg-[#f8fafc] rounded-lg p-3 text-xs text-[#64748b] leading-relaxed">
-              Generates static HTML, CSS, and JS files. One{" "}
-              <code>.html</code> file per page, shared <code>css/style.css</code> and{" "}
-              <code>js/script.js</code>.
+              Generates static HTML, CSS, JS, and <code>sitemap.xml</code>. One <code>.html</code> file per page.
             </div>
 
             {error && (
@@ -120,7 +204,7 @@ export default function ExportDialog() {
                 disabled={step === "exporting"}
                 className="flex-1 bg-[#2563eb] hover:bg-[#1d4ed8] disabled:opacity-60 text-white py-2.5 rounded-lg text-sm font-medium transition-colors"
               >
-                {step === "exporting" ? "Exporting…" : "Export"}
+                {step === "exporting" ? "Exportingâ€¦" : "Export"}
               </button>
             </div>
           </>

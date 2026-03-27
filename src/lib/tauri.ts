@@ -1,6 +1,8 @@
 import { invoke } from "@tauri-apps/api/core";
 import { open, save } from "@tauri-apps/plugin-dialog";
-import type { Project, ProjectMeta } from "../types/project";
+import { writeTextFile, readTextFile } from "@tauri-apps/plugin-fs";
+import { openPath } from "@tauri-apps/plugin-opener";
+import type { Project, ProjectMeta, Page } from "../types/project";
 
 // ─── Project Commands ──────────────────────────────────────────────────────
 
@@ -81,6 +83,31 @@ export async function cmd_deployFtp(
   return invoke<string>("deploy_ftp", { config, localPath });
 }
 
+// ─── SFTP Commands ─────────────────────────────────────────────────────────
+
+export interface SftpConfig {
+  host: string;
+  port: number;
+  username: string;
+  password: string;
+  remotePath: string;
+}
+
+export async function cmd_testSftp(config: SftpConfig): Promise<string> {
+  return invoke<string>("test_sftp_connection", { config });
+}
+
+export async function cmd_deploySftp(
+  config: SftpConfig,
+  localPath: string
+): Promise<string> {
+  return invoke<string>("deploy_sftp", { config, localPath });
+}
+
+export async function openInBrowser(filePath: string): Promise<void> {
+  await openPath(filePath);
+}
+
 // ─── Dialog Helpers ────────────────────────────────────────────────────────
 
 export async function pickDirectory(): Promise<string | null> {
@@ -99,4 +126,30 @@ export async function pickSaveDir(title: string): Promise<string | null> {
   const result = await save({ title, filters: [] });
   if (typeof result === "string") return result;
   return null;
+}
+
+// ─── Page Import / Export ──────────────────────────────────────────────────
+
+export async function exportPageToFile(page: Page): Promise<boolean> {
+  const filePath = await save({
+    title: "Export Page",
+    filters: [{ name: "StackPage Page", extensions: ["stackpage-page.json"] }],
+    defaultPath: `${page.slug}.stackpage-page.json`,
+  });
+  if (!filePath) return false;
+  await writeTextFile(filePath, JSON.stringify(page, null, 2));
+  return true;
+}
+
+export async function importPageFromFile(): Promise<Page | null> {
+  const filePath = await open({
+    title: "Import Page",
+    filters: [{ name: "StackPage Page", extensions: ["stackpage-page.json", "json"] }],
+    multiple: false,
+    directory: false,
+  });
+  if (!filePath || typeof filePath !== "string") return null;
+  const content = await readTextFile(filePath);
+  const page: Page = JSON.parse(content);
+  return page;
 }

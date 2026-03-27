@@ -6,6 +6,7 @@ import { useProjectStore } from "../../stores/useProjectStore";
 import { useEditorStore } from "../../stores/useEditorStore";
 import type { Section } from "../../types/project";
 import ComponentBlock from "./ComponentBlock";
+import { nanoid } from "../../types/nanoid";
 
 interface Props {
   section: Section;
@@ -68,6 +69,8 @@ function BlocksSortable({ section, pageId }: { section: Section; pageId: string 
 export default function SectionBlock({ section, pageId }: Props) {
   const [hover, setHover] = useState(false);
   const deleteSection = useProjectStore((s) => s.deleteSection);
+  const duplicateSection = useProjectStore((s) => s.duplicateSection);
+  const updateSection = useProjectStore((s) => s.updateSection);
   const selectBlock = useEditorStore((s) => s.selectBlock);
   const selectedSectionId = useEditorStore((s) => s.selectedSectionId);
 
@@ -113,16 +116,42 @@ export default function SectionBlock({ section, pageId }: Props) {
               <span className="text-white/70 text-xs">{section.label}</span>
             )}
           </div>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              if (confirm("Delete this section?")) deleteSection(pageId, section.id);
-            }}
-            className="text-white/70 hover:text-white text-xs"
-            title="Delete section"
-          >
-            ×
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                duplicateSection(pageId, section.id);
+              }}
+              className="text-white/70 hover:text-white text-xs px-1"
+              title="Duplicate section"
+            >
+              ⧉
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                const gId = section.globalId ?? nanoid();
+                updateSection(pageId, section.id, {
+                  isGlobal: !section.isGlobal,
+                  globalId: !section.isGlobal ? gId : undefined,
+                });
+              }}
+              className={`text-xs px-1 ${section.isGlobal ? "text-yellow-300 hover:text-white" : "text-white/70 hover:text-white"}`}
+              title={section.isGlobal ? "Unlink global section" : "Make global (sync across all pages)"}
+            >
+              {section.isGlobal ? "★" : "☆"}
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                if (confirm("Delete this section?")) deleteSection(pageId, section.id);
+              }}
+              className="text-white/70 hover:text-white text-xs"
+              title="Delete section"
+            >
+              ×
+            </button>
+          </div>
         </div>
       )}
 
@@ -130,6 +159,9 @@ export default function SectionBlock({ section, pageId }: Props) {
       <div
         style={{
           backgroundColor: section.backgroundColor,
+          backgroundImage: section.backgroundImage ? `url(${section.backgroundImage})` : undefined,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
           paddingTop: `${section.paddingTop}px`,
           paddingBottom: `${section.paddingBottom}px`,
           paddingLeft: `${section.paddingLeft}px`,

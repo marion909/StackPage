@@ -32,11 +32,53 @@
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+    "category": "DeveloperTool",
+    "copyright": "© 2025 StackPage",
+    "shortDescription": "Visual website builder",
+    "longDescription": "StackPage is a drag-and-drop visual website builder that generates clean HTML, CSS and JavaScript. Design pages with reusable blocks, export static sites, and publish via FTP or Netlify — all from a native desktop app.",
+    "windows": {
+      "wix": {
+        "language": "en-US"
+      },
+      "nsis": {
+        "displayLanguageSelector": true,
+        "languages": ["English", "German"]
+      }
+    },
+    "macOS": {
+      "entitlements": null,
+      "exceptionDomain": "",
+      "signingIdentity": null,
+      "providerShortName": null,
+      "dmg": {
+        "background": null,
+        "windowSize": { "width": 660, "height": 400 },
+        "appPosition": { "x": 180, "y": 170 },
+        "applicationFolderPosition": { "x": 480, "y": 170 }
+      }
+    },
+    "linux": {
+      "deb": {
+        "depends": []
+      },
+      "appimage": {
+        "bundleMediaFramework": true
+      }
+    }
   },
   "plugins": {
     "fs": {
       "requireLiteralLeadingDot": false
+    },
+    "updater": {
+      "pubkey": "PLACEHOLDER_REPLACE_WITH_TAURI_UPDATER_PUBKEY",
+      "endpoints": [
+        "https://releases.stackpage.app/{{target}}/{{arch}}/{{current_version}}"
+      ],
+      "windows": {
+        "installMode": "passive"
+      }
     }
   }
 }

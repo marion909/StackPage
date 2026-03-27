@@ -1,6 +1,7 @@
 import { HexColorPicker } from "react-colorful";
 import { useState } from "react";
-import type { Block, GalleryImage, NavLink, FooterLink, FormField } from "../../../types/blocks";
+import type { Block, GalleryImage, NavLink, FooterLink, FormField, SlideItem, TestimonialItem, PricingPlan, PricingFeature } from "../../../types/blocks";
+import { ICON_NAMES } from "../../blocks/IconBlock";
 import { useProjectStore } from "../../../stores/useProjectStore";
 import { nanoid } from "../../../types/nanoid";
 
@@ -178,6 +179,12 @@ export default function PropertiesPanel({ block, pageId, sectionId }: Props) {
           <Field label="Alt Text">
             <TextInput value={block.props.alt} onChange={(v) => update({ alt: v })} />
           </Field>
+          {block.props.src && !block.props.alt && (
+            <div className="flex items-center gap-1.5 text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+              <span>⚠</span>
+              <span>Image is missing alt text (accessibility)</span>
+            </div>
+          )}
           <Field label="Caption">
             <TextInput value={block.props.caption ?? ""} onChange={(v) => update({ caption: v })} />
           </Field>
@@ -494,6 +501,444 @@ export default function PropertiesPanel({ block, pageId, sectionId }: Props) {
           </div>
         </>
       )}
+
+      {block.type === "slide-banner" && (
+        <>
+          <Field label="Height (px)">
+            <NumberInput value={block.props.height} onChange={(v) => update({ height: v })} min={200} max={900} />
+          </Field>
+          <Field label="Object Fit">
+            <Select value={block.props.objectFit} onChange={(v) => update({ objectFit: v as "cover"|"contain"|"fill" })} options={[{ label: "Cover", value: "cover" }, { label: "Contain", value: "contain" }, { label: "Fill", value: "fill" }]} />
+          </Field>
+          <Field label="Border Radius (px)">
+            <NumberInput value={block.props.borderRadius ?? 0} onChange={(v) => update({ borderRadius: v || undefined })} min={0} max={50} />
+          </Field>
+          <Field label="Autoplay">
+            <Select value={String(block.props.autoplay)} onChange={(v) => update({ autoplay: v === "true" })} options={[{ label: "Yes", value: "true" }, { label: "No", value: "false" }]} />
+          </Field>
+          {block.props.autoplay && (
+            <Field label="Autoplay Interval (ms)">
+              <NumberInput value={block.props.autoplayInterval} onChange={(v) => update({ autoplayInterval: v })} min={1000} max={10000} step={500} />
+            </Field>
+          )}
+          <Field label="Show Arrows">
+            <Select value={String(block.props.showArrows)} onChange={(v) => update({ showArrows: v === "true" })} options={[{ label: "Yes", value: "true" }, { label: "No", value: "false" }]} />
+          </Field>
+          <Field label="Show Indicators">
+            <Select value={String(block.props.showIndicators)} onChange={(v) => update({ showIndicators: v === "true" })} options={[{ label: "Yes", value: "true" }, { label: "No", value: "false" }]} />
+          </Field>
+
+          {/* Slides list */}
+          <div className="mb-3">
+            <div className="flex items-center justify-between mb-1">
+              <span className="block text-[11px] font-medium text-[#64748b] uppercase tracking-wide">Slides</span>
+              <button
+                onClick={() => {
+                  const slide: SlideItem = { id: nanoid(), imageSrc: "", imageAlt: "", title: "New Slide", subtitle: "", ctaLabel: "", ctaHref: "#", overlayColor: "rgba(0,0,0,0.35)", titleColor: "#ffffff", subtitleColor: "#f1f5f9" };
+                  update({ slides: [...block.props.slides, slide] });
+                }}
+                className="text-[11px] text-[#2563eb] hover:underline font-medium"
+              >
+                + Add
+              </button>
+            </div>
+            <div className="space-y-2">
+              {block.props.slides.length === 0 && (
+                <p className="text-[11px] text-[#94a3b8] italic">No slides yet. Click + Add.</p>
+              )}
+              {block.props.slides.map((slide, idx) => (
+                <div key={slide.id} className="border border-[#e2e8f0] rounded p-2 bg-[#f8fafc]">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-[11px] font-semibold text-[#374151]">Slide {idx + 1}</span>
+                    <button onClick={() => update({ slides: block.props.slides.filter((_, i) => i !== idx) })} className="text-[11px] text-[#ef4444] hover:underline">Remove</button>
+                  </div>
+                  <input type="text" placeholder="Image URL" value={slide.imageSrc}
+                    onChange={(e) => update({ slides: block.props.slides.map((s, i) => i === idx ? { ...s, imageSrc: e.target.value } : s) })}
+                    className="w-full border border-[#d1d5db] rounded px-2 py-1 text-xs mb-1 focus:outline-none focus:ring-1 focus:ring-[#2563eb]" />
+                  <input type="text" placeholder="Alt text" value={slide.imageAlt}
+                    onChange={(e) => update({ slides: block.props.slides.map((s, i) => i === idx ? { ...s, imageAlt: e.target.value } : s) })}
+                    className="w-full border border-[#d1d5db] rounded px-2 py-1 text-xs mb-1 focus:outline-none focus:ring-1 focus:ring-[#2563eb]" />
+                  <input type="text" placeholder="Title" value={slide.title ?? ""}
+                    onChange={(e) => update({ slides: block.props.slides.map((s, i) => i === idx ? { ...s, title: e.target.value } : s) })}
+                    className="w-full border border-[#d1d5db] rounded px-2 py-1 text-xs mb-1 focus:outline-none focus:ring-1 focus:ring-[#2563eb]" />
+                  <input type="text" placeholder="Subtitle" value={slide.subtitle ?? ""}
+                    onChange={(e) => update({ slides: block.props.slides.map((s, i) => i === idx ? { ...s, subtitle: e.target.value } : s) })}
+                    className="w-full border border-[#d1d5db] rounded px-2 py-1 text-xs mb-1 focus:outline-none focus:ring-1 focus:ring-[#2563eb]" />
+                  <input type="text" placeholder="CTA Label" value={slide.ctaLabel ?? ""}
+                    onChange={(e) => update({ slides: block.props.slides.map((s, i) => i === idx ? { ...s, ctaLabel: e.target.value } : s) })}
+                    className="w-full border border-[#d1d5db] rounded px-2 py-1 text-xs mb-1 focus:outline-none focus:ring-1 focus:ring-[#2563eb]" />
+                  <input type="text" placeholder="CTA Link" value={slide.ctaHref ?? ""}
+                    onChange={(e) => update({ slides: block.props.slides.map((s, i) => i === idx ? { ...s, ctaHref: e.target.value } : s) })}
+                    className="w-full border border-[#d1d5db] rounded px-2 py-1 text-xs mb-1 focus:outline-none focus:ring-1 focus:ring-[#2563eb]" />
+                  <div className="grid grid-cols-3 gap-1 mt-1">
+                    <div>
+                      <p className="text-[10px] text-[#94a3b8] mb-0.5">Overlay</p>
+                      <ColorInput value={slide.overlayColor ?? "rgba(0,0,0,0.35)"} onChange={(v) => update({ slides: block.props.slides.map((s, i) => i === idx ? { ...s, overlayColor: v } : s) })} />
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-[#94a3b8] mb-0.5">Title</p>
+                      <ColorInput value={slide.titleColor ?? "#ffffff"} onChange={(v) => update({ slides: block.props.slides.map((s, i) => i === idx ? { ...s, titleColor: v } : s) })} />
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-[#94a3b8] mb-0.5">Subtitle</p>
+                      <ColorInput value={slide.subtitleColor ?? "#f1f5f9"} onChange={(v) => update({ slides: block.props.slides.map((s, i) => i === idx ? { ...s, subtitleColor: v } : s) })} />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
+
+      {block.type === "divider" && (
+        <>
+          <Field label="Variant">
+            <Select value={block.props.variant} onChange={(v) => update({ variant: v })} options={[{ label: "Rule (line)", value: "rule" }, { label: "Spacer (empty)", value: "spacer" }]} />
+          </Field>
+          <Field label={block.props.variant === "spacer" ? "Height (px)" : "Thickness (px)"}>
+            <NumberInput value={block.props.height} onChange={(v) => update({ height: v })} min={1} max={200} />
+          </Field>
+          {block.props.variant === "rule" && (
+            <>
+              <Field label="Line Style">
+                <Select value={block.props.lineStyle} onChange={(v) => update({ lineStyle: v })} options={[{ label: "Solid", value: "solid" }, { label: "Dashed", value: "dashed" }, { label: "Dotted", value: "dotted" }]} />
+              </Field>
+              <Field label="Color">
+                <ColorInput value={block.props.color} onChange={(v) => update({ color: v })} />
+              </Field>
+              <Field label="Width (%)">
+                <NumberInput value={block.props.width} onChange={(v) => update({ width: v })} min={10} max={100} />
+              </Field>
+            </>
+          )}
+          <Field label="Margin Top (px)">
+            <NumberInput value={block.props.marginTop} onChange={(v) => update({ marginTop: v })} min={0} max={200} />
+          </Field>
+          <Field label="Margin Bottom (px)">
+            <NumberInput value={block.props.marginBottom} onChange={(v) => update({ marginBottom: v })} min={0} max={200} />
+          </Field>
+        </>
+      )}
+
+      {block.type === "video" && (
+        <>
+          <Field label="Video URL">
+            <TextInput value={block.props.url} onChange={(v) => update({ url: v })} />
+          </Field>
+          <Field label="Video Type">
+            <Select value={block.props.videoType} onChange={(v) => update({ videoType: v })} options={[{ label: "YouTube", value: "youtube" }, { label: "Vimeo", value: "vimeo" }, { label: "Direct (.mp4)", value: "direct" }]} />
+          </Field>
+          <Field label="Aspect Ratio">
+            <Select value={block.props.aspectRatio} onChange={(v) => update({ aspectRatio: v })} options={[{ label: "16:9", value: "16/9" }, { label: "4:3", value: "4/3" }, { label: "1:1 (Square)", value: "1/1" }]} />
+          </Field>
+          <Field label="Width (%)">
+            <NumberInput value={block.props.width} onChange={(v) => update({ width: v })} min={10} max={100} />
+          </Field>
+          <Field label="Align">
+            <Select value={block.props.align} onChange={(v) => update({ align: v })} options={ALIGN_OPTIONS} />
+          </Field>
+          <Field label="Border Radius (px)">
+            <NumberInput value={block.props.borderRadius ?? 0} onChange={(v) => update({ borderRadius: v || undefined })} min={0} max={24} />
+          </Field>
+          {block.props.videoType === "direct" && (
+            <>
+              <Field label="Show Controls">
+                <Select value={String(block.props.controls)} onChange={(v) => update({ controls: v === "true" })} options={[{ label: "Yes", value: "true" }, { label: "No", value: "false" }]} />
+              </Field>
+              <Field label="Autoplay">
+                <Select value={String(block.props.autoplay)} onChange={(v) => update({ autoplay: v === "true" })} options={[{ label: "Yes", value: "true" }, { label: "No", value: "false" }]} />
+              </Field>
+              <Field label="Muted">
+                <Select value={String(block.props.muted)} onChange={(v) => update({ muted: v === "true" })} options={[{ label: "Yes", value: "true" }, { label: "No", value: "false" }]} />
+              </Field>
+              <Field label="Loop">
+                <Select value={String(block.props.loop)} onChange={(v) => update({ loop: v === "true" })} options={[{ label: "Yes", value: "true" }, { label: "No", value: "false" }]} />
+              </Field>
+            </>
+          )}
+        </>
+      )}
+
+      {block.type === "hero" && (
+        <>
+          <Field label="Heading">
+            <TextInput value={block.props.heading} onChange={(v) => update({ heading: v })} />
+          </Field>
+          <Field label="Subheading">
+            <TextInput value={block.props.subheading} onChange={(v) => update({ subheading: v })} />
+          </Field>
+          <Field label="CTA Label">
+            <TextInput value={block.props.ctaLabel} onChange={(v) => update({ ctaLabel: v })} />
+          </Field>
+          <Field label="CTA Link">
+            <TextInput value={block.props.ctaHref} onChange={(v) => update({ ctaHref: v })} />
+          </Field>
+          <Field label="CTA Style">
+            <Select value={block.props.ctaVariant} onChange={(v) => update({ ctaVariant: v })} options={[{ label: "Primary", value: "primary" }, { label: "Secondary", value: "secondary" }, { label: "Outline", value: "outline" }]} />
+          </Field>
+          <Field label="Secondary CTA Label">
+            <TextInput value={block.props.ctaSecondaryLabel} onChange={(v) => update({ ctaSecondaryLabel: v })} />
+          </Field>
+          <Field label="Secondary CTA Link">
+            <TextInput value={block.props.ctaSecondaryHref} onChange={(v) => update({ ctaSecondaryHref: v })} />
+          </Field>
+          <Field label="Background Image URL">
+            <TextInput value={block.props.backgroundImage} onChange={(v) => update({ backgroundImage: v })} />
+          </Field>
+          <Field label="Background Color">
+            <ColorInput value={block.props.backgroundColor} onChange={(v) => update({ backgroundColor: v })} />
+          </Field>
+          <Field label="Overlay Color">
+            <ColorInput value={block.props.overlayColor} onChange={(v) => update({ overlayColor: v })} />
+          </Field>
+          <Field label="Heading Color">
+            <ColorInput value={block.props.headingColor} onChange={(v) => update({ headingColor: v })} />
+          </Field>
+          <Field label="Subheading Color">
+            <ColorInput value={block.props.subheadingColor} onChange={(v) => update({ subheadingColor: v })} />
+          </Field>
+          <Field label="Text Align">
+            <Select value={block.props.textAlign} onChange={(v) => update({ textAlign: v })} options={ALIGN_OPTIONS} />
+          </Field>
+          <Field label="Min Height (px)">
+            <NumberInput value={block.props.minHeight} onChange={(v) => update({ minHeight: v })} min={200} max={1000} />
+          </Field>
+          <Field label="Padding Top (px)">
+            <NumberInput value={block.props.paddingTop} onChange={(v) => update({ paddingTop: v })} min={0} max={300} />
+          </Field>
+          <Field label="Padding Bottom (px)">
+            <NumberInput value={block.props.paddingBottom} onChange={(v) => update({ paddingBottom: v })} min={0} max={300} />
+          </Field>
+        </>
+      )}
+
+      {block.type === "testimonial" && (
+        <>
+          <Field label="Columns">
+            <Select value={String(block.props.columns)} onChange={(v) => update({ columns: Number(v) as 1|2|3 })} options={[{ label: "1", value: "1" }, { label: "2", value: "2" }, { label: "3", value: "3" }]} />
+          </Field>
+          <Field label="Show Rating">
+            <Select value={String(block.props.showRating)} onChange={(v) => update({ showRating: v === "true" })} options={[{ label: "Yes", value: "true" }, { label: "No", value: "false" }]} />
+          </Field>
+          <Field label="Card Color">
+            <ColorInput value={block.props.cardColor} onChange={(v) => update({ cardColor: v })} />
+          </Field>
+          <Field label="Quote Color">
+            <ColorInput value={block.props.quoteColor} onChange={(v) => update({ quoteColor: v })} />
+          </Field>
+          <Field label="Author Color">
+            <ColorInput value={block.props.authorColor} onChange={(v) => update({ authorColor: v })} />
+          </Field>
+          <Field label="Background Color">
+            <ColorInput value={block.props.backgroundColor ?? ""} onChange={(v) => update({ backgroundColor: v || undefined })} />
+          </Field>
+          <Field label="Padding Top (px)">
+            <NumberInput value={block.props.paddingTop} onChange={(v) => update({ paddingTop: v })} min={0} max={200} />
+          </Field>
+          <Field label="Padding Bottom (px)">
+            <NumberInput value={block.props.paddingBottom} onChange={(v) => update({ paddingBottom: v })} min={0} max={200} />
+          </Field>
+
+          {/* Testimonial items */}
+          <div className="mb-3">
+            <div className="flex items-center justify-between mb-1">
+              <span className="block text-[11px] font-medium text-[#64748b] uppercase tracking-wide">Testimonials</span>
+              <button
+                onClick={() => {
+                  const item: TestimonialItem = { id: nanoid(), quote: "Great product!", authorName: "John Doe", authorTitle: "", authorAvatar: "", rating: 5 };
+                  update({ items: [...block.props.items, item] });
+                }}
+                className="text-[11px] text-[#2563eb] hover:underline font-medium"
+              >+ Add</button>
+            </div>
+            <div className="space-y-2">
+              {block.props.items.map((item, idx) => (
+                <div key={item.id} className="border border-[#e2e8f0] rounded p-2 bg-[#f8fafc]">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-[11px] font-semibold text-[#374151]">Item {idx + 1}</span>
+                    <button onClick={() => update({ items: block.props.items.filter((_, i) => i !== idx) })} className="text-[11px] text-[#ef4444] hover:underline">Remove</button>
+                  </div>
+                  <textarea
+                    placeholder="Quote" value={item.quote} rows={3}
+                    onChange={(e) => update({ items: block.props.items.map((t, i) => i === idx ? { ...t, quote: e.target.value } : t) })}
+                    className="w-full border border-[#d1d5db] rounded px-2 py-1 text-xs mb-1 focus:outline-none focus:ring-1 focus:ring-[#2563eb] resize-none"
+                  />
+                  <input type="text" placeholder="Author Name" value={item.authorName}
+                    onChange={(e) => update({ items: block.props.items.map((t, i) => i === idx ? { ...t, authorName: e.target.value } : t) })}
+                    className="w-full border border-[#d1d5db] rounded px-2 py-1 text-xs mb-1 focus:outline-none focus:ring-1 focus:ring-[#2563eb]" />
+                  <input type="text" placeholder="Title (optional)" value={item.authorTitle}
+                    onChange={(e) => update({ items: block.props.items.map((t, i) => i === idx ? { ...t, authorTitle: e.target.value } : t) })}
+                    className="w-full border border-[#d1d5db] rounded px-2 py-1 text-xs mb-1 focus:outline-none focus:ring-1 focus:ring-[#2563eb]" />
+                  <input type="text" placeholder="Avatar URL (optional)" value={item.authorAvatar}
+                    onChange={(e) => update({ items: block.props.items.map((t, i) => i === idx ? { ...t, authorAvatar: e.target.value } : t) })}
+                    className="w-full border border-[#d1d5db] rounded px-2 py-1 text-xs mb-1 focus:outline-none focus:ring-1 focus:ring-[#2563eb]" />
+                  {block.props.showRating && (
+                    <div className="flex items-center gap-1 mt-1">
+                      <span className="text-[11px] text-[#64748b]">Stars:</span>
+                      {[1,2,3,4,5].map((n) => (
+                        <button key={n} onClick={() => update({ items: block.props.items.map((t, i) => i === idx ? { ...t, rating: n } : t) })}
+                          className={`text-base ${n <= item.rating ? "text-amber-400" : "text-[#d1d5db]"}`}>★</button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
+
+      {block.type === "pricing-table" && (
+        <>
+          <Field label="Background Color">
+            <ColorInput value={block.props.backgroundColor ?? ""} onChange={(v) => update({ backgroundColor: v || undefined })} />
+          </Field>
+          <Field label="Padding Top (px)">
+            <NumberInput value={block.props.paddingTop} onChange={(v) => update({ paddingTop: v })} min={0} max={200} />
+          </Field>
+          <Field label="Padding Bottom (px)">
+            <NumberInput value={block.props.paddingBottom} onChange={(v) => update({ paddingBottom: v })} min={0} max={200} />
+          </Field>
+
+          {/* Plans */}
+          <div className="mb-3">
+            <div className="flex items-center justify-between mb-1">
+              <span className="block text-[11px] font-medium text-[#64748b] uppercase tracking-wide">Plans</span>
+              <button
+                onClick={() => {
+                  const plan: PricingPlan = { id: nanoid(), name: "New Plan", price: "$0", period: "/mo", description: "", features: [{ id: nanoid(), text: "Feature", included: true }], ctaLabel: "Get Started", ctaHref: "#", highlighted: false, highlightColor: "#2563eb" };
+                  update({ plans: [...block.props.plans, plan] });
+                }}
+                className="text-[11px] text-[#2563eb] hover:underline font-medium"
+              >+ Add</button>
+            </div>
+            <div className="space-y-3">
+              {block.props.plans.map((plan, pIdx) => (
+                <div key={plan.id} className="border border-[#e2e8f0] rounded p-2 bg-[#f8fafc]">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-[11px] font-semibold text-[#374151]">Plan {pIdx + 1}</span>
+                    <button onClick={() => update({ plans: block.props.plans.filter((_, i) => i !== pIdx) })} className="text-[11px] text-[#ef4444] hover:underline">Remove</button>
+                  </div>
+                  <input type="text" placeholder="Name" value={plan.name}
+                    onChange={(e) => update({ plans: block.props.plans.map((p, i) => i === pIdx ? { ...p, name: e.target.value } : p) })}
+                    className="w-full border border-[#d1d5db] rounded px-2 py-1 text-xs mb-1 focus:outline-none" />
+                  <div className="grid grid-cols-2 gap-1 mb-1">
+                    <input type="text" placeholder="Price (e.g. $9)" value={plan.price}
+                      onChange={(e) => update({ plans: block.props.plans.map((p, i) => i === pIdx ? { ...p, price: e.target.value } : p) })}
+                      className="border border-[#d1d5db] rounded px-2 py-1 text-xs focus:outline-none" />
+                    <input type="text" placeholder="Period (e.g. /mo)" value={plan.period}
+                      onChange={(e) => update({ plans: block.props.plans.map((p, i) => i === pIdx ? { ...p, period: e.target.value } : p) })}
+                      className="border border-[#d1d5db] rounded px-2 py-1 text-xs focus:outline-none" />
+                  </div>
+                  <input type="text" placeholder="Description" value={plan.description}
+                    onChange={(e) => update({ plans: block.props.plans.map((p, i) => i === pIdx ? { ...p, description: e.target.value } : p) })}
+                    className="w-full border border-[#d1d5db] rounded px-2 py-1 text-xs mb-1 focus:outline-none" />
+                  <div className="grid grid-cols-2 gap-1 mb-1">
+                    <input type="text" placeholder="CTA Label" value={plan.ctaLabel}
+                      onChange={(e) => update({ plans: block.props.plans.map((p, i) => i === pIdx ? { ...p, ctaLabel: e.target.value } : p) })}
+                      className="border border-[#d1d5db] rounded px-2 py-1 text-xs focus:outline-none" />
+                    <input type="text" placeholder="CTA Link" value={plan.ctaHref}
+                      onChange={(e) => update({ plans: block.props.plans.map((p, i) => i === pIdx ? { ...p, ctaHref: e.target.value } : p) })}
+                      className="border border-[#d1d5db] rounded px-2 py-1 text-xs focus:outline-none" />
+                  </div>
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <label className="flex items-center gap-1 text-[11px] cursor-pointer">
+                      <input type="checkbox" checked={plan.highlighted}
+                        onChange={(e) => update({ plans: block.props.plans.map((p, i) => i === pIdx ? { ...p, highlighted: e.target.checked } : p) })} />
+                      Highlighted
+                    </label>
+                    <div className="flex items-center gap-1">
+                      <span className="text-[11px] text-[#64748b]">Color</span>
+                      <ColorInput value={plan.highlightColor} onChange={(v) => update({ plans: block.props.plans.map((p, i) => i === pIdx ? { ...p, highlightColor: v } : p) })} />
+                    </div>
+                  </div>
+                  {/* Features */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[10px] text-[#94a3b8] uppercase">Features</span>
+                      <button
+                        onClick={() => update({ plans: block.props.plans.map((p, i) => i === pIdx ? { ...p, features: [...p.features, { id: nanoid(), text: "New feature", included: true } as PricingFeature] } : p) })}
+                        className="text-[10px] text-[#2563eb] hover:underline"
+                      >+ Add</button>
+                    </div>
+                    <div className="space-y-1">
+                      {plan.features.map((feat, fIdx) => (
+                        <div key={feat.id} className="flex items-center gap-1">
+                          <input type="checkbox" checked={feat.included}
+                            onChange={(e) => update({ plans: block.props.plans.map((p, i) => i === pIdx ? { ...p, features: p.features.map((f, j) => j === fIdx ? { ...f, included: e.target.checked } : f) } : p) })} />
+                          <input type="text" value={feat.text}
+                            onChange={(e) => update({ plans: block.props.plans.map((p, i) => i === pIdx ? { ...p, features: p.features.map((f, j) => j === fIdx ? { ...f, text: e.target.value } : f) } : p) })}
+                            className="flex-1 border border-[#d1d5db] rounded px-1 py-0.5 text-xs focus:outline-none" />
+                          <button onClick={() => update({ plans: block.props.plans.map((p, i) => i === pIdx ? { ...p, features: p.features.filter((_, j) => j !== fIdx) } : p) })}
+                            className="text-[10px] text-[#ef4444]">×</button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
+
+      {block.type === "icon" && (
+        <>
+          <Field label="Icon">
+            <Select
+              value={block.props.iconName}
+              onChange={(v) => update({ iconName: v })}
+              options={ICON_NAMES.map((n) => ({ label: n.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()), value: n }))}
+            />
+          </Field>
+          <Field label="Size (px)">
+            <NumberInput value={block.props.size} onChange={(v) => update({ size: v })} min={16} max={200} />
+          </Field>
+          <Field label="Color">
+            <ColorInput value={block.props.color} onChange={(v) => update({ color: v })} />
+          </Field>
+          <Field label="Align">
+            <Select value={block.props.align} onChange={(v) => update({ align: v })} options={ALIGN_OPTIONS} />
+          </Field>
+          <Field label="Label">
+            <TextInput value={block.props.label} onChange={(v) => update({ label: v })} />
+          </Field>
+          {block.props.label && (
+            <Field label="Label Color">
+              <ColorInput value={block.props.labelColor} onChange={(v) => update({ labelColor: v })} />
+            </Field>
+          )}
+          <Field label="Link (optional)">
+            <TextInput value={block.props.href} onChange={(v) => update({ href: v })} />
+          </Field>
+        </>
+      )}
+
+      {block.type === "map" && (
+        <>
+          <Field label="Embed URL">
+            <TextInput value={block.props.embedUrl} onChange={(v) => update({ embedUrl: v })} />
+          </Field>
+          <div className="mb-2 text-[11px] text-[#64748b]">
+            Paste an OpenStreetMap or Google Maps embed URL.<br />
+            For Google Maps: Share → Embed → copy the src attribute.
+          </div>
+          <Field label="Height (px)">
+            <NumberInput value={block.props.height} onChange={(v) => update({ height: v })} min={200} max={800} />
+          </Field>
+          <Field label="Width (%)">
+            <NumberInput value={block.props.width} onChange={(v) => update({ width: v })} min={10} max={100} />
+          </Field>
+          <Field label="Align">
+            <Select value={block.props.align} onChange={(v) => update({ align: v })} options={ALIGN_OPTIONS} />
+          </Field>
+          <Field label="Border Radius (px)">
+            <NumberInput value={block.props.borderRadius ?? 0} onChange={(v) => update({ borderRadius: v || undefined })} min={0} max={32} />
+          </Field>
+        </>
+      )}
     </div>
   );
+
 }

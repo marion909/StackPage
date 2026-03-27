@@ -6,19 +6,23 @@ import {
   cmd_writeExportFiles,
   cmd_testFtp,
   cmd_deployFtp,
+  cmd_testSftp,
+  cmd_deploySftp,
   pickDirectory,
 } from "../../lib/tauri";
-import type { FtpConfig } from "../../lib/tauri";
+import type { FtpConfig, SftpConfig } from "../../lib/tauri";
 
 type Step = "idle" | "testing" | "deploying" | "done" | "error";
+type Protocol = "ftp" | "sftp";
 
 export default function DeployDialog() {
   const project = useProjectStore((s) => s.project)!;
   const closeDeploy = useEditorStore((s) => s.closeDeployDialog);
 
   const saved = project.deploySettings;
+  const [protocol, setProtocol] = useState<Protocol>(saved?.protocol ?? "ftp");
   const [host, setHost] = useState(saved?.host ?? "");
-  const [port, setPort] = useState(String(saved?.port ?? "21"));
+  const [port, setPort] = useState(String(saved?.port ?? protocol === "sftp" ? "22" : "21"));
   const [username, setUsername] = useState(saved?.username ?? "");
   const [password, setPassword] = useState("");
   const [remotePath, setRemotePath] = useState(saved?.remotePath ?? "/");
@@ -29,7 +33,7 @@ export default function DeployDialog() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
-  function buildConfig(): FtpConfig {
+  function buildFtpConfig(): FtpConfig {
     return {
       host: host.trim(),
       port: Number(port) || 21,
@@ -40,13 +44,36 @@ export default function DeployDialog() {
     };
   }
 
+  function buildSftpConfig(): SftpConfig {
+    return {
+      host: host.trim(),
+      port: Number(port) || 22,
+      username: username.trim(),
+      password,
+      remotePath: remotePath.trim() || "/",
+    };
+  }
+
+  function handleProtocolSwitch(p: Protocol) {
+    setProtocol(p);
+    setPort(p === "sftp" ? "22" : "21");
+    setStep("idle");
+    setMessage("");
+    setError("");
+  }
+
   async function handleTest() {
     setStep("testing");
     setError("");
     setMessage("");
     try {
-      const { remotePath: _r, ...testConfig } = buildConfig();
-      const result = await cmd_testFtp(testConfig);
+      let result: string;
+      if (protocol === "ftp") {
+        const { remotePath: _r, ...testConfig } = buildFtpConfig();
+        result = await cmd_testFtp(testConfig);
+      } else {
+        result = await cmd_testSftp(buildSftpConfig());
+      }
       setMessage(result);
       setStep("idle");
     } catch (e: unknown) {
@@ -66,10 +93,8 @@ export default function DeployDialog() {
     setMessage("Generating files…");
 
     try {
-      // 1. Generate files in memory
       const files = exportProject(project);
 
-      // 2. Pick a temp directory if not already set
       let outputDir = tempDir;
       if (!outputDir) {
         const dir = await pickDirectory();
@@ -82,13 +107,16 @@ export default function DeployDialog() {
         setTempDir(dir);
       }
 
-      // 3. Write to export dir
       setMessage("Writing export files…");
       await cmd_writeExportFiles(files, outputDir);
 
-      // 4. Upload via FTP
       setMessage("Uploading…");
-      const result = await cmd_deployFtp(buildConfig(), outputDir);
+      let result: string;
+      if (protocol === "ftp") {
+        result = await cmd_deployFtp(buildFtpConfig(), outputDir);
+      } else {
+        result = await cmd_deploySftp(buildSftpConfig(), outputDir);
+      }
       setMessage(result);
       setStep("done");
     } catch (e: unknown) {
@@ -104,7 +132,7 @@ export default function DeployDialog() {
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 p-6 flex flex-col gap-5 max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-[#1e293b]">Publish via FTP</h2>
+          <h2 className="text-lg font-semibold text-[#1e293b]">Publish via FTP / SFTP</h2>
           <button
             onClick={closeDeploy}
             disabled={isBusy}
@@ -129,6 +157,24 @@ export default function DeployDialog() {
           </div>
         ) : (
           <>
+            {/* Protocol tabs */}
+            <div className="flex rounded-lg border border-[#e2e8f0] overflow-hidden text-sm font-medium">
+              {(["ftp", "sftp"] as Protocol[]).map((p) => (
+                <button
+                  key={p}
+                  onClick={() => handleProtocolSwitch(p)}
+                  disabled={isBusy}
+                  className={`flex-1 py-2 transition-colors ${
+                    protocol === p
+                      ? "bg-[#2563eb] text-white"
+                      : "text-[#64748b] hover:bg-[#f1f5f9]"
+                  }`}
+                >
+                  {p.toUpperCase()}
+                </button>
+              ))}
+            </div>
+
             {/* Connection fields */}
             <div className="flex flex-col gap-3">
               <div className="flex gap-3">
@@ -137,7 +183,7 @@ export default function DeployDialog() {
                   <input
                     value={host}
                     onChange={(e) => setHost(e.target.value)}
-                    placeholder="ftp.example.com"
+                    placeholder={protocol === "sftp" ? "ssh.example.com" : "ftp.example.com"}
                     disabled={isBusy}
                     className="border border-[#d1d5db] rounded-lg px-3 py-2 text-sm text-[#1e293b] focus:outline-none focus:ring-2 focus:ring-[#2563eb]/30 focus:border-[#2563eb] disabled:opacity-60"
                   />
@@ -147,7 +193,7 @@ export default function DeployDialog() {
                   <input
                     value={port}
                     onChange={(e) => setPort(e.target.value)}
-                    placeholder="21"
+                    placeholder={protocol === "sftp" ? "22" : "21"}
                     disabled={isBusy}
                     className="border border-[#d1d5db] rounded-lg px-3 py-2 text-sm text-[#1e293b] focus:outline-none focus:ring-2 focus:ring-[#2563eb]/30 focus:border-[#2563eb] disabled:opacity-60"
                   />
@@ -159,7 +205,7 @@ export default function DeployDialog() {
                 <input
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder="ftpuser"
+                  placeholder={protocol === "sftp" ? "ssh-user" : "ftpuser"}
                   autoComplete="username"
                   disabled={isBusy}
                   className="border border-[#d1d5db] rounded-lg px-3 py-2 text-sm text-[#1e293b] focus:outline-none focus:ring-2 focus:ring-[#2563eb]/30 focus:border-[#2563eb] disabled:opacity-60"
@@ -190,16 +236,18 @@ export default function DeployDialog() {
                 />
               </div>
 
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={passive}
-                  onChange={(e) => setPassive(e.target.checked)}
-                  disabled={isBusy}
-                  className="rounded"
-                />
-                <span className="text-sm text-[#374151]">Passive mode (recommended)</span>
-              </label>
+              {protocol === "ftp" && (
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={passive}
+                    onChange={(e) => setPassive(e.target.checked)}
+                    disabled={isBusy}
+                    className="rounded"
+                  />
+                  <span className="text-sm text-[#374151]">Passive mode (recommended)</span>
+                </label>
+              )}
             </div>
 
             {/* Status feedback */}
@@ -212,9 +260,8 @@ export default function DeployDialog() {
               <p className="text-sm text-red-500 bg-red-50 rounded-lg px-3 py-2">{error}</p>
             )}
 
-            {/* Note about export directory */}
             <p className="text-xs text-[#94a3b8]">
-              Files will be exported to a local folder you choose, then uploaded via FTP.
+              Files will be exported to a local folder you choose, then uploaded via {protocol.toUpperCase()}.
             </p>
 
             {/* Actions */}

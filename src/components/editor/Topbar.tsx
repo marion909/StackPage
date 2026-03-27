@@ -1,11 +1,18 @@
 import { useProjectStore } from "../../stores/useProjectStore";
 import { useEditorStore } from "../../stores/useEditorStore";
 import { cmd_saveProject } from "../../lib/tauri";
+import { captureEditorThumbnail } from "../../lib/thumbnail";
+import { useI18n } from "../../i18n";
 
 export default function Topbar() {
+  const { t } = useI18n();
   const project = useProjectStore((s) => s.project);
   const isDirty = useProjectStore((s) => s.isDirty);
   const markClean = useProjectStore((s) => s.markClean);
+  const past = useProjectStore((s) => s.past);
+  const future = useProjectStore((s) => s.future);
+  const undo = useProjectStore((s) => s.undo);
+  const redo = useProjectStore((s) => s.redo);
   const isSaving = useEditorStore((s) => s.isSaving);
   const setSaving = useEditorStore((s) => s.setSaving);
   const previewMode = useEditorStore((s) => s.previewMode);
@@ -13,13 +20,22 @@ export default function Topbar() {
   const setView = useEditorStore((s) => s.setView);
   const openExport = useEditorStore((s) => s.openExportDialog);
   const openDeploy = useEditorStore((s) => s.openDeployDialog);
+  const openNetlify = useEditorStore((s) => s.openNetlifyDialog);
   const openTheme = useEditorStore((s) => s.openThemeEditor);
+  const isPreviewOpen = useEditorStore((s) => s.isPreviewOpen);
+  const togglePreview = useEditorStore((s) => s.togglePreview);
 
   async function handleSave() {
     if (!project) return;
     setSaving(true);
     try {
-      await cmd_saveProject(project as any);
+      // Capture thumbnail before saving
+      const thumbnail = await captureEditorThumbnail();
+      const projectToSave = thumbnail ? { ...project, thumbnail } : project;
+      await cmd_saveProject(projectToSave as any);
+      if (thumbnail) {
+        useProjectStore.getState().updateProjectMeta({ thumbnail } as any);
+      }
       markClean();
     } catch (e) {
       alert(`Save failed: ${e}`);
@@ -34,7 +50,7 @@ export default function Topbar() {
       <button
         onClick={() => setView("dashboard")}
         className="flex items-center gap-2 text-[#64748b] hover:text-[#1e293b] transition-colors"
-        title="Back to Dashboard"
+        title={t("topbar.backToDashboard")}
       >
         <div className="w-6 h-6 bg-[#2563eb] rounded flex items-center justify-center text-white text-xs font-bold">
           SP
@@ -48,6 +64,24 @@ export default function Topbar() {
         {project?.name ?? "Untitled"}
       </span>
       {isDirty && <span className="w-1.5 h-1.5 rounded-full bg-amber-400" title="Unsaved changes" />}
+
+      {/* Undo / Redo */}
+      <button
+        onClick={undo}
+        disabled={past.length === 0}
+        title="Undo (Ctrl+Z)"
+        className="text-sm text-[#64748b] hover:text-[#1e293b] px-2 py-1 rounded hover:bg-[#f1f5f9] transition-colors disabled:opacity-30"
+      >
+        ↩
+      </button>
+      <button
+        onClick={redo}
+        disabled={future.length === 0}
+        title="Redo (Ctrl+Y)"
+        className="text-sm text-[#64748b] hover:text-[#1e293b] px-2 py-1 rounded hover:bg-[#f1f5f9] transition-colors disabled:opacity-30"
+      >
+        ↪
+      </button>
 
       <div className="flex-1" />
 
@@ -75,7 +109,20 @@ export default function Topbar() {
         onClick={openTheme}
         className="text-sm text-[#64748b] hover:text-[#1e293b] px-3 py-1.5 rounded-lg hover:bg-[#f1f5f9] transition-colors"
       >
-        🎨 Theme
+        🎨 {t("topbar.theme")}
+      </button>
+
+      {/* Preview toggle */}
+      <button
+        onClick={togglePreview}
+        title="Toggle live preview pane"
+        className={`text-sm px-3 py-1.5 rounded-lg transition-colors ${
+          isPreviewOpen
+            ? "bg-[#eff6ff] text-[#2563eb] font-medium"
+            : "text-[#64748b] hover:text-[#1e293b] hover:bg-[#f1f5f9]"
+        }`}
+      >
+        👁 {t("topbar.preview")}
       </button>
 
       {/* Save */}
@@ -84,7 +131,7 @@ export default function Topbar() {
         disabled={isSaving || !isDirty}
         className="text-sm text-[#64748b] hover:text-[#1e293b] px-3 py-1.5 rounded-lg hover:bg-[#f1f5f9] transition-colors disabled:opacity-40"
       >
-        {isSaving ? "Saving…" : "Save"}
+        {isSaving ? t("topbar.saving") : t("topbar.save")}
       </button>
 
       {/* Export */}
@@ -92,15 +139,23 @@ export default function Topbar() {
         onClick={openExport}
         className="text-sm text-[#64748b] hover:text-[#1e293b] px-3 py-1.5 rounded-lg hover:bg-[#f1f5f9] transition-colors"
       >
-        Export
+        {t("topbar.export")}
       </button>
 
-      {/* Publish */}
+      {/* Publish via FTP */}
       <button
         onClick={openDeploy}
-        className="bg-[#2563eb] hover:bg-[#1d4ed8] text-white px-4 py-1.5 rounded-lg text-sm font-medium transition-colors"
+        className="text-sm text-[#64748b] hover:text-[#1e293b] px-3 py-1.5 rounded-lg hover:bg-[#f1f5f9] transition-colors"
       >
-        Publish
+        FTP
+      </button>
+
+      {/* Publish to Netlify */}
+      <button
+        onClick={openNetlify}
+        className="bg-[#00c7b7] hover:bg-[#00b3a4] text-white px-4 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5"
+      >
+        <span>▲</span> Netlify
       </button>
     </header>
   );

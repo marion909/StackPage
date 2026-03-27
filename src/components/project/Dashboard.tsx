@@ -4,15 +4,34 @@ import { createNewProject } from "../../types/project";
 import { useProjectStore } from "../../stores/useProjectStore";
 import { useEditorStore } from "../../stores/useEditorStore";
 import { useThemeStore } from "../../stores/useThemeStore";
-import { cmd_listProjects, cmd_loadProject, cmd_createProject, cmd_deleteProject, pickDirectory, pickFile } from "../../lib/tauri";
+import { cmd_listProjects, cmd_loadProject, cmd_createProject, cmd_deleteProject, cmd_duplicateProject, cmd_saveProject, pickDirectory, pickFile } from "../../lib/tauri";
+import type { PageTemplate } from "../../lib/pageTemplates";
 import NewProjectDialog from "./NewProjectDialog";
 import ProjectCard from "./ProjectCard";
+import OnboardingModal, { hasSeenOnboarding } from "./OnboardingModal";
+import { useI18n } from "../../i18n";
+import UpdaterBanner from "../UpdaterBanner";
+
+const RECENTS_KEY = "stackpage_recents";
+const MAX_RECENTS = 5;
+
+function getRecents(): string[] {
+  try { return JSON.parse(localStorage.getItem(RECENTS_KEY) ?? "[]"); } catch { return []; }
+}
+
+function addRecent(filePath: string) {
+  const paths = getRecents().filter((p) => p !== filePath);
+  localStorage.setItem(RECENTS_KEY, JSON.stringify([filePath, ...paths].slice(0, MAX_RECENTS)));
+}
 
 export default function Dashboard() {
+  const { t, locale, setLocale } = useI18n();
   const [projects, setProjects] = useState<ProjectMeta[]>([]);
   const [loading, setLoading] = useState(true);
   const [showNew, setShowNew] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(() => !hasSeenOnboarding());
   const [error, setError] = useState<string | null>(null);
+  const [recents, setRecents] = useState<string[]>(() => getRecents());
 
   const setProject = useProjectStore((s) => s.setProject);
   const setView = useEditorStore((s) => s.setView);
@@ -42,20 +61,29 @@ export default function Dashboard() {
       setProject(project as any);
       if (project.theme) setTheme(project.theme as any);
       setActivePageId(project.pages?.[0]?.id ?? null);
+      addRecent(meta.filePath);
+      setRecents(getRecents());
       setView("editor");
     } catch (e) {
       setError(`Failed to open project: ${e}`);
     }
   }
 
-  async function handleCreateProject(name: string, description: string) {
+  async function handleCreateProject(name: string, description: string, template: PageTemplate) {
     try {
       const dir = await pickDirectory();
       if (!dir) return;
       const project = await cmd_createProject(name, description, dir);
+      // Apply template sections to the first page
+      const sections = template.buildSections();
+      if (sections.length > 0 && project.pages?.[0]) {
+        (project as any).pages[0].sections = sections;
+      }
       setProject(project as any);
       if (project.theme) setTheme(project.theme as any);
       setActivePageId((project as any).pages?.[0]?.id ?? null);
+      addRecent((project as any).projectFilePath ?? "");
+      setRecents(getRecents());
       setView("editor");
       setShowNew(false);
     } catch (e) {
@@ -73,6 +101,31 @@ export default function Dashboard() {
     }
   }
 
+  async function handleRenameProject(meta: ProjectMeta) {
+    const newName = prompt("New project name:", meta.name);
+    if (!newName || newName.trim() === meta.name) return;
+    try {
+      const project = await cmd_loadProject(meta.filePath);
+      const updated = { ...project, name: newName.trim() };
+      await cmd_saveProject(updated as Parameters<typeof cmd_saveProject>[0]);
+      setProjects((prev) => prev.map((p) => p.id === meta.id ? { ...p, name: newName.trim() } : p));
+    } catch (e) {
+      setError(`Failed to rename: ${e}`);
+    }
+  }
+
+  async function handleDuplicateProject(meta: ProjectMeta) {
+    try {
+      const dir = await pickDirectory();
+      if (!dir) return;
+      const newName = `${meta.name} (Copy)`;
+      const duplicate = await cmd_duplicateProject(meta.filePath, newName, dir);
+      setProjects((prev) => [...prev, { id: duplicate.id, name: duplicate.name, description: duplicate.description, updatedAt: duplicate.updatedAt, filePath: duplicate.projectFilePath ?? "" }]);
+    } catch (e) {
+      setError(`Failed to duplicate: ${e}`);
+    }
+  }
+
   async function handleOpenFromFile() {
     try {
       const filePath = await pickFile([{ name: "StackPage Project", extensions: ["json"] }]);
@@ -81,6 +134,8 @@ export default function Dashboard() {
       setProject(project as any);
       if (project.theme) setTheme(project.theme as any);
       setActivePageId(project.pages?.[0]?.id ?? null);
+      addRecent(filePath);
+      setRecents(getRecents());
       setView("editor");
     } catch (e) {
       setError(`Failed to open project file: ${e}`);
@@ -88,8 +143,10 @@ export default function Dashboard() {
   }
 
   // Dev/offline fallback: open a blank project without Tauri
-  function handleNewProjectOffline(name: string, description: string) {
+  function handleNewProjectOffline(name: string, description: string, template: PageTemplate) {
     const project = createNewProject(name, description);
+    const sections = template.buildSections();
+    if (sections.length > 0) project.pages[0].sections = sections;
     setProject(project);
     setActivePageId(project.pages[0].id);
     setView("editor");
@@ -108,6 +165,14 @@ export default function Dashboard() {
           <span className="text-xs text-[#64748b] bg-[#f1f5f9] px-2 py-0.5 rounded">v0.1</span>
         </div>
         <div className="flex items-center gap-2">
+          {/* Language toggle */}
+          <button
+            onClick={() => setLocale(locale === "en" ? "de" : "en")}
+            className="border border-[#e2e8f0] hover:border-[#2563eb] hover:text-[#2563eb] text-[#64748b] px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+            title={locale === "en" ? "Deutsch" : "English"}
+          >
+            {locale === "en" ? "DE" : "EN"}
+          </button>
           <button
             onClick={handleOpenFromFile}
             className="border border-[#e2e8f0] hover:border-[#2563eb] hover:text-[#2563eb] text-[#64748b] px-4 py-2 rounded-lg text-sm font-medium transition-colors"
@@ -118,13 +183,14 @@ export default function Dashboard() {
             onClick={() => setShowNew(true)}
             className="bg-[#2563eb] hover:bg-[#1d4ed8] text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
           >
-            + New Project
+            + {t("dashboard.newProject")}
           </button>
         </div>
       </header>
 
       {/* Main */}
       <main className="flex-1 px-8 py-8 max-w-6xl mx-auto w-full">
+        <UpdaterBanner />
         {error && (
           <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm flex justify-between">
             {error}
@@ -133,24 +199,55 @@ export default function Dashboard() {
         )}
 
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-[#1e293b]">Projects</h1>
+          <h1 className="text-2xl font-bold text-[#1e293b]">{t("dashboard.title")}</h1>
           <p className="text-[#64748b] text-sm mt-1">Open an existing project or create a new one.</p>
         </div>
 
+        {/* Recent files */}
+        {recents.length > 0 && (
+          <div className="mb-6">
+            <h2 className="text-sm font-semibold text-[#64748b] uppercase tracking-wide mb-2">Recent</h2>
+            <div className="flex flex-col gap-1">
+              {recents.map((filePath) => (
+                <button
+                  key={filePath}
+                  onClick={async () => {
+                    try {
+                      const project = await cmd_loadProject(filePath);
+                      setProject(project as any);
+                      if (project.theme) setTheme(project.theme as any);
+                      setActivePageId(project.pages?.[0]?.id ?? null);
+                      addRecent(filePath);
+                      setRecents(getRecents());
+                      setView("editor");
+                    } catch (e) {
+                      setError(`Failed to open recent: ${e}`);
+                    }
+                  }}
+                  className="text-left text-xs text-[#64748b] hover:text-[#2563eb] hover:bg-[#eff6ff] px-3 py-1.5 rounded-lg transition-colors truncate"
+                  title={filePath}
+                >
+                  📄 {filePath}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {loading ? (
-          <div className="text-[#64748b] text-sm">Loading projects…</div>
+          <div className="text-[#64748b] text-sm">{t("common.loading")}</div>
         ) : projects.length === 0 ? (
           <div className="border-2 border-dashed border-[#e2e8f0] rounded-xl p-16 text-center">
             <div className="text-4xl mb-4">📄</div>
-            <h3 className="text-[#1e293b] font-medium mb-2">No projects yet</h3>
+            <h3 className="text-[#1e293b] font-medium mb-2">{t("dashboard.noProjects")}</h3>
             <p className="text-[#64748b] text-sm mb-6">
-              Create your first project to get started
+              {t("dashboard.noProjectsHint")}
             </p>
             <button
               onClick={() => setShowNew(true)}
               className="bg-[#2563eb] hover:bg-[#1d4ed8] text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-colors"
             >
-              Create Project
+              {t("dashboard.newProject")}
             </button>
           </div>
         ) : (
@@ -161,6 +258,8 @@ export default function Dashboard() {
                 meta={meta}
                 onOpen={() => handleOpenProject(meta)}
                 onDelete={() => handleDeleteProject(meta)}
+                onRename={() => handleRenameProject(meta)}
+                onDuplicate={() => handleDuplicateProject(meta)}
               />
             ))}
           </div>
@@ -172,6 +271,13 @@ export default function Dashboard() {
           onClose={() => setShowNew(false)}
           onCreate={handleCreateProject}
           onCreateOffline={handleNewProjectOffline}
+        />
+      )}
+
+      {showOnboarding && (
+        <OnboardingModal
+          onCreateProject={() => { setShowOnboarding(false); setShowNew(true); }}
+          onDismiss={() => setShowOnboarding(false)}
         />
       )}
     </div>

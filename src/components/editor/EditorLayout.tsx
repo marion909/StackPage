@@ -10,18 +10,21 @@ import {
   type DragEndEvent,
 } from "@dnd-kit/core";
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Topbar from "./Topbar";
 import LeftSidebar from "./Sidebar/LeftSidebar";
 import RightSidebar from "./Sidebar/RightSidebar";
 import Canvas from "./Canvas";
 import ExportDialog from "../export/ExportDialog";
 import DeployDialog from "../deploy/DeployDialog";
+import NetlifyDeployDialog from "../deploy/NetlifyDeployDialog";
 import ThemeEditorModal from "./ThemeEditorModal";
+import PreviewPane from "./PreviewPane";
 import { useEditorStore } from "../../stores/useEditorStore";
 import { useProjectStore } from "../../stores/useProjectStore";
 import { createNewSection } from "../../types/project";
 import { createDefaultBlock } from "../../lib/blockDefaults";
+import { cmd_saveProject } from "../../lib/tauri";
 import type { BlockType } from "../../types/blocks";
 import { BLOCK_TYPES } from "../../types/blocks";
 
@@ -30,16 +33,91 @@ const PALETTE_PREFIX = "palette--";
 export default function EditorLayout() {
   const isExportOpen = useEditorStore((s) => s.isExportDialogOpen);
   const isDeployOpen = useEditorStore((s) => s.isDeployDialogOpen);
+  const isNetlifyOpen = useEditorStore((s) => s.isNetlifyDialogOpen);
+  const closeNetlify = useEditorStore((s) => s.closeNetlifyDialog);
   const isThemeOpen = useEditorStore((s) => s.isThemeEditorOpen);
+  const isPreviewOpen = useEditorStore((s) => s.isPreviewOpen);
 
   const project = useProjectStore((s) => s.project);
+  const isDirty = useProjectStore((s) => s.isDirty);
+  const markClean = useProjectStore((s) => s.markClean);
   const addBlock = useProjectStore((s) => s.addBlock);
   const addSection = useProjectStore((s) => s.addSection);
   const reorderSections = useProjectStore((s) => s.reorderSections);
+  const deleteBlock = useProjectStore((s) => s.deleteBlock);
+  const deleteBlocks = useProjectStore((s) => s.deleteBlocks);
+  const undo = useProjectStore((s) => s.undo);
+  const redo = useProjectStore((s) => s.redo);
   const activePageId = useEditorStore((s) => s.activePageId);
   const selectBlock = useEditorStore((s) => s.selectBlock);
+  const clearSelection = useEditorStore((s) => s.clearSelection);
+  const selectedBlockId = useEditorStore((s) => s.selectedBlockId);
+  const selectedBlockIds = useEditorStore((s) => s.selectedBlockIds);
+  const selectedSectionId = useEditorStore((s) => s.selectedSectionId);
 
   const [draggingPaletteType, setDraggingPaletteType] = useState<BlockType | null>(null);
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // ── Auto-save (30s debounce when dirty) ──────────────────────────────────
+  useEffect(() => {
+    if (!isDirty || !project?.projectFilePath) return;
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    autoSaveTimerRef.current = setTimeout(async () => {
+      try {
+        await cmd_saveProject(project as Parameters<typeof cmd_saveProject>[0]);
+        markClean();
+      } catch {
+        // silent — user can still save manually
+      }
+    }, 30_000);
+    return () => {
+      if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    };
+  }, [isDirty, project, markClean]);
+
+  // ── Keyboard shortcuts ──────────────────────────────────────────────────
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      const tag = (e.target as HTMLElement).tagName;
+      const isEditable = (e.target as HTMLElement).isContentEditable || tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT";
+
+      // Undo / Redo (Ctrl+Z / Ctrl+Y or Ctrl+Shift+Z)
+      if ((e.ctrlKey || e.metaKey) && e.key === "z" && !e.shiftKey) {
+        e.preventDefault();
+        undo();
+        return;
+      }
+      if ((e.ctrlKey || e.metaKey) && (e.key === "y" || (e.key === "z" && e.shiftKey))) {
+        e.preventDefault();
+        redo();
+        return;
+      }
+
+      if (isEditable) return;
+
+      // Delete / Backspace → remove selected block(s)
+      if ((e.key === "Delete" || e.key === "Backspace") && selectedSectionId && activePageId) {
+        if (selectedBlockIds.length > 1) {
+          e.preventDefault();
+          deleteBlocks(activePageId, selectedSectionId, selectedBlockIds);
+          clearSelection();
+        } else if (selectedBlockId) {
+          e.preventDefault();
+          deleteBlock(activePageId, selectedSectionId, selectedBlockId);
+          clearSelection();
+        }
+        return;
+      }
+
+      // Escape → deselect
+      if (e.key === "Escape") {
+        clearSelection();
+      }
+    }
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [selectedBlockId, selectedBlockIds, selectedSectionId, activePageId, deleteBlock, deleteBlocks, clearSelection, selectBlock, undo, redo]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -125,6 +203,7 @@ export default function EditorLayout() {
         <div className="flex flex-1 overflow-hidden">
           <LeftSidebar />
           <Canvas />
+          {isPreviewOpen && <PreviewPane />}
           <RightSidebar />
         </div>
       </div>
@@ -137,6 +216,7 @@ export default function EditorLayout() {
       </DragOverlay>
       {isExportOpen && <ExportDialog />}
       {isDeployOpen && <DeployDialog />}
+      {isNetlifyOpen && <NetlifyDeployDialog onClose={closeNetlify} />}
       {isThemeOpen && <ThemeEditorModal />}
     </DndContext>
   );
