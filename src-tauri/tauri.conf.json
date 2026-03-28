@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "StackPage",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "identifier": "com.stackpage.app",
   "build": {
     "beforeDevCommand": "pnpm dev",
@@ -72,9 +72,9 @@
       "requireLiteralLeadingDot": false
     },
     "updater": {
-      "pubkey": "PLACEHOLDER_REPLACE_WITH_TAURI_UPDATER_PUBKEY",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDMxMjM3OTdERUEyQThFN0YKUldSL2ppcnFmWGtqTVpjWlg0VkJySWM3TVJkVGd5TDFNbDlzMVJhVW1OTzN1SE5wdmxBbVNJeGkK",
       "endpoints": [
-        "https://releases.stackpage.app/{{target}}/{{arch}}/{{current_version}}"
+        "https://stackpage.at/updates/{{target}}/{{arch}}/{{current_version}}"
       ],
       "windows": {
         "installMode": "passive"
