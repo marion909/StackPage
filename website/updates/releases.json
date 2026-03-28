@@ -1,0 +1,11 @@
+{
+  "version": "1.0.1",
+  "notes": "Erste öffentliche Version",
+  "pub_date": "2026-03-28T12:00:00Z",
+  "platforms": {
+    "windows-x86_64": {
+      "signature": "HIER_INHALT_DER_.sig_DATEI_EINFÜGEN",
+      "url": "https://stackpage.at/updates/download/stackpage_1.0.1_x64-setup.exe"
+    }
+  }
+}

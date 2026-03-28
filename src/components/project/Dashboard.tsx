@@ -11,6 +11,7 @@ import ProjectCard from "./ProjectCard";
 import OnboardingModal, { hasSeenOnboarding } from "./OnboardingModal";
 import { useI18n } from "../../i18n";
 import UpdaterBanner from "../UpdaterBanner";
+import logo from "../../assets/logo.png";
 
 const RECENTS_KEY = "stackpage_recents";
 const MAX_RECENTS = 5;
@@ -158,10 +159,7 @@ export default function Dashboard() {
       {/* Header */}
       <header className="bg-white border-b border-[#e2e8f0] px-8 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-[#2563eb] rounded-lg flex items-center justify-center text-white font-bold text-sm">
-            SP
-          </div>
-          <span className="font-semibold text-[#1e293b] text-lg">StackPage</span>
+          <img src={logo} alt="StackPage" className="h-8 object-contain" />
           <span className="text-xs text-[#64748b] bg-[#f1f5f9] px-2 py-0.5 rounded">v0.1</span>
         </div>
         <div className="flex items-center gap-2">

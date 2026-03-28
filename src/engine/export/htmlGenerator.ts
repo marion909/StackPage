@@ -126,6 +126,15 @@ function generateSectionHTML(section: Section, project: Project, _isFirst?: bool
 }
 
 function generateBlockHTML(block: Block): string {
+  const html = generateBlockInnerHTML(block);
+  // Wrap with cornerRadius if set
+  if (block.cornerRadius !== undefined && block.cornerRadius > 0) {
+    return `<div style="border-radius:${block.cornerRadius}px;overflow:hidden">${html}</div>`;
+  }
+  return html;
+}
+
+function generateBlockInnerHTML(block: Block): string {
   switch (block.type) {
     case "heading": {
       const { text, level, align, color, fontSize, fontWeight } = block.props;
@@ -196,20 +205,33 @@ function generateBlockHTML(block: Block): string {
     }
 
     case "contact-form": {
-      const { fields, submitLabel, backgroundColor, paddingTop, paddingBottom, recipientEmail } = block.props;
-      const action = recipientEmail ? `action="mailto:${escAttr(recipientEmail)}" method="POST" enctype="text/plain"` : "";
-      const formStyle = `max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:16px`;
+      const { fields, submitLabel, backgroundColor, paddingTop, paddingBottom, submitMode, formspreeEndpoint, netlifyFormName, recipientEmail, successMessage } = block.props;
       const wrapStyle = `background:${backgroundColor ?? "transparent"};padding:${paddingTop}px 0 ${paddingBottom}px`;
+      const formStyle = `max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:16px`;
+      const inputStyle = `width:100%;border:1px solid #d1d5db;border-radius:8px;padding:10px 12px;font-size:0.9rem;box-sizing:border-box`;
+
+      let formAttrs = `style="${formStyle}" data-sp-form data-success="${escAttr(successMessage ?? "Thank you!")}"`;
+      if (submitMode === "formspree" && formspreeEndpoint) {
+        formAttrs += ` action="${escAttr(formspreeEndpoint)}" method="POST" data-sp-formspree`;
+      } else if (submitMode === "netlify") {
+        const name = netlifyFormName || "contact";
+        formAttrs += ` name="${escAttr(name)}" method="POST" data-netlify="true" netlify-honeypot="bot-field"`;
+      } else if (submitMode === "mailto" && recipientEmail) {
+        formAttrs += ` action="mailto:${escAttr(recipientEmail)}" method="POST" enctype="text/plain"`;
+      }
+
+      const honeypot = submitMode === "netlify" ? `<input type="hidden" name="form-name" value="${escAttr(netlifyFormName || "contact")}"><p hidden><label>Don't fill this out: <input name="bot-field"></label></p>` : "";
+
       const fieldsHtml = fields.map((f) => {
         const labelHtml = `<label style="display:block;font-size:0.875rem;font-weight:600;margin-bottom:4px">${escHtml(f.label)}${f.required ? '<span style="color:#ef4444;margin-left:2px">*</span>' : ""}</label>`;
-        const inputStyle = `width:100%;border:1px solid #d1d5db;border-radius:8px;padding:10px 12px;font-size:0.9rem;box-sizing:border-box`;
         const input = f.type === "textarea"
           ? `<textarea name="${escAttr(f.id)}" placeholder="${escAttr(f.label)}" rows="4" ${f.required ? "required" : ""} style="${inputStyle}"></textarea>`
           : `<input type="${f.type}" name="${escAttr(f.id)}" placeholder="${escAttr(f.label)}" ${f.required ? "required" : ""} style="${inputStyle}">`;
         return `<div>${labelHtml}${input}</div>`;
       }).join("");
+
       const btnStyle = `background:#2563eb;color:#fff;padding:12px 24px;border-radius:8px;font-weight:600;border:none;cursor:pointer;font-size:1rem`;
-      return `<div style="${wrapStyle}"><form ${action} style="${formStyle}">${fieldsHtml}<button type="submit" style="${btnStyle}">${escHtml(submitLabel)}</button></form></div>`;
+      return `<div style="${wrapStyle}"><form ${formAttrs}>${honeypot}${fieldsHtml}<button type="submit" style="${btnStyle}">${escHtml(submitLabel)}</button></form></div>`;
     }
 
     case "gallery": {

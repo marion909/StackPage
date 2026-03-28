@@ -30,6 +30,8 @@ export type BlockType =
 interface BaseBlock {
   id: string;
   type: BlockType;
+  /** Optional per-block corner radius in px. Falls back to theme.borderRadius if not set. */
+  cornerRadius?: number;
 }
 
 export interface HeadingBlockProps {
@@ -152,10 +154,17 @@ export interface FormField {
   placeholder?: string;
   required: boolean;
 }
+export type ContactFormSubmitMode = "formspree" | "netlify" | "mailto";
 export interface ContactFormProps {
   fields: FormField[];
   submitLabel: string;
   successMessage: string;
+  submitMode: ContactFormSubmitMode;
+  /** Formspree: full endpoint URL like https://formspree.io/f/xxxxx */
+  formspreeEndpoint?: string;
+  /** Netlify: name attribute for the form (used by Netlify's form detection) */
+  netlifyFormName?: string;
+  /** mailto fallback: recipient address */
   recipientEmail?: string;
   backgroundColor?: string;
   paddingTop: number;

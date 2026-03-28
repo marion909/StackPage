@@ -128,8 +128,7 @@ $fallback_url = $release_url;
 <nav class="nav">
   <div class="container nav__inner">
     <a href="#" class="nav__logo">
-      <span class="nav__logo-badge">SP</span>
-      StackPage
+      <img src="assets/logo.png" alt="StackPage" class="nav__logo-img">
     </a>
     <ul class="nav__links">
       <li><a href="#features">Features</a></li>

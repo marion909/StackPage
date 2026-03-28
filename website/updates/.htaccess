@@ -1,0 +1,6 @@
+# Alle Anfragen (außer bestehende Dateien) an index.php weiterleiten
+# damit /updates/windows/x86_64/1.0.0 → index.php geroutet wird
+
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^(.*)$ index.php [L,QSA]

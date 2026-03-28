@@ -100,6 +100,8 @@ const ALIGN_OPTIONS = [
 
 export default function PropertiesPanel({ block, pageId, sectionId }: Props) {
   const updateBlock = useProjectStore((s) => s.updateBlock);
+  const patchBlock = useProjectStore((s) => s.patchBlock);
+  const theme = useProjectStore((s) => s.project?.theme);
 
   function update(props: Record<string, unknown>) {
     updateBlock(pageId, sectionId, block.id, props as Partial<Block["props"]>);
@@ -110,6 +112,29 @@ export default function PropertiesPanel({ block, pageId, sectionId }: Props) {
       <div className="text-[10px] font-semibold text-[#94a3b8] uppercase tracking-wider mb-3 px-1">
         {block.type} block
       </div>
+
+      {/* ── Universal: Corner Radius ── */}
+      <Field label="Corner Radius (px)">
+        <div className="flex items-center gap-2">
+          <input
+            type="range"
+            min={0}
+            max={64}
+            value={block.cornerRadius ?? theme?.borderRadius ?? 8}
+            onChange={(e) => patchBlock(pageId, sectionId, block.id, { cornerRadius: Number(e.target.value) })}
+            className="flex-1 accent-[#2563eb]"
+          />
+          <span className="text-xs text-[#374151] w-8 text-right">{block.cornerRadius ?? theme?.borderRadius ?? 8}px</span>
+          {block.cornerRadius !== undefined && (
+            <button
+              onClick={() => patchBlock(pageId, sectionId, block.id, { cornerRadius: undefined })}
+              className="text-[10px] text-[#94a3b8] hover:text-[#374151]"
+              title="Reset to theme default"
+            >↺</button>
+          )}
+        </div>
+      </Field>
+      <div className="border-b border-[#f1f5f9] mb-3" />
 
       {block.type === "heading" && (
         <>
@@ -326,14 +351,70 @@ export default function PropertiesPanel({ block, pageId, sectionId }: Props) {
 
       {block.type === "contact-form" && (
         <>
+          <Field label="Submit Mode">
+            <Select
+              value={block.props.submitMode ?? "formspree"}
+              onChange={(v) => update({ submitMode: v })}
+              options={[
+                { label: "Formspree (recommended)", value: "formspree" },
+                { label: "Netlify Forms", value: "netlify" },
+                { label: "Mailto (opens email client)", value: "mailto" },
+              ]}
+            />
+          </Field>
+
+          {(block.props.submitMode ?? "formspree") === "formspree" && (
+            <>
+              <Field label="Formspree Endpoint URL">
+                <TextInput
+                  value={block.props.formspreeEndpoint ?? ""}
+                  onChange={(v) => update({ formspreeEndpoint: v })}
+                />
+              </Field>
+              <div className="mb-3 text-[11px] text-[#64748b] leading-relaxed">
+                Create a free form at{" "}
+                <a href="https://formspree.io" target="_blank" rel="noreferrer" className="text-[#2563eb] underline">
+                  formspree.io
+                </a>{" "}
+                and paste the endpoint URL (e.g. <code className="bg-[#f1f5f9] px-1 rounded">https://formspree.io/f/xxxxx</code>).
+              </div>
+            </>
+          )}
+
+          {block.props.submitMode === "netlify" && (
+            <>
+              <Field label="Netlify Form Name">
+                <TextInput
+                  value={block.props.netlifyFormName ?? "contact"}
+                  onChange={(v) => update({ netlifyFormName: v })}
+                />
+              </Field>
+              <div className="mb-3 text-[11px] text-[#64748b] leading-relaxed">
+                Deploy to Netlify and enable form detection in your site dashboard. The form name must be unique per site.
+              </div>
+            </>
+          )}
+
+          {block.props.submitMode === "mailto" && (
+            <Field label="Recipient Email">
+              <TextInput value={block.props.recipientEmail ?? ""} onChange={(v) => update({ recipientEmail: v })} />
+            </Field>
+          )}
+
           <Field label="Submit Button Label">
             <TextInput value={block.props.submitLabel} onChange={(v) => update({ submitLabel: v })} />
           </Field>
           <Field label="Success Message">
             <TextInput value={block.props.successMessage} onChange={(v) => update({ successMessage: v })} />
           </Field>
-          <Field label="Recipient Email">
-            <TextInput value={block.props.recipientEmail ?? ""} onChange={(v) => update({ recipientEmail: v })} />
+          <Field label="Background Color">
+            <ColorInput value={block.props.backgroundColor ?? ""} onChange={(v) => update({ backgroundColor: v })} />
+          </Field>
+          <Field label="Padding Top (px)">
+            <NumberInput value={block.props.paddingTop} onChange={(v) => update({ paddingTop: v })} min={0} max={200} />
+          </Field>
+          <Field label="Padding Bottom (px)">
+            <NumberInput value={block.props.paddingBottom} onChange={(v) => update({ paddingBottom: v })} min={0} max={200} />
           </Field>
 
           {/* Form fields */}

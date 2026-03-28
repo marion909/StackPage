@@ -37,6 +37,7 @@ interface ProjectState {
   // Blocks
   addBlock: (pageId: string, sectionId: string, block: Block) => void;
   updateBlock: (pageId: string, sectionId: string, blockId: string, props: Partial<Block["props"]>) => void;
+  patchBlock: (pageId: string, sectionId: string, blockId: string, patch: Partial<Pick<Block, "cornerRadius">>) => void;
   deleteBlock: (pageId: string, sectionId: string, blockId: string) => void;
   deleteBlocks: (pageId: string, sectionId: string, blockIds: string[]) => void;
   duplicateBlock: (pageId: string, sectionId: string, blockId: string) => void;
@@ -313,6 +314,35 @@ export const useProjectStore = create<ProjectState>((set) => ({
                                 b.id === blockId
                                   ? ({ ...b, props: { ...b.props, ...props } } as Block)
                                   : b
+                              ),
+                            }
+                          : sec
+                      ),
+                    }
+                  : p
+              ),
+            }),
+            isDirty: true,
+          }
+        : s
+    ),
+
+  patchBlock: (pageId, sectionId, blockId, patch) =>
+    set((s) =>
+      s.project
+        ? {
+            project: touch({
+              ...s.project,
+              pages: s.project.pages.map((p) =>
+                p.id === pageId
+                  ? {
+                      ...p,
+                      sections: p.sections.map((sec) =>
+                        sec.id === sectionId
+                          ? {
+                              ...sec,
+                              blocks: sec.blocks.map((b) =>
+                                b.id === blockId ? ({ ...b, ...patch } as Block) : b
                               ),
                             }
                           : sec

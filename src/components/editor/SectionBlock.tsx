@@ -56,7 +56,7 @@ function BlocksSortable({ section, pageId }: { section: Section; pageId: string 
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
       <SortableContext items={section.blocks.map((b) => b.id)} strategy={verticalListSortingStrategy}>
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col">
           {section.blocks.map((block) => (
             <ComponentBlock key={block.id} block={block} pageId={pageId} sectionId={section.id} />
           ))}

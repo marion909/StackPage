@@ -68,7 +68,9 @@ jobs:
       - name: Build Tauri app
         uses: tauri-apps/tauri-action@v0
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN:                       ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY:          ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           tagName: ${{ github.ref_name }}
           releaseName: "StackPage ${{ github.ref_name }}"
@@ -85,3 +87,48 @@ jobs:
           releaseDraft: true
           prerelease: false
           args: ${{ matrix.args }}
+
+      # ─── releases.json + FTP-Upload (nur Windows) ──────────────────────────
+      - name: Generate releases.json
+        if: matrix.platform == 'windows-latest'
+        shell: pwsh
+        run: |
+          $version = "${{ github.ref_name }}" -replace '^v', ''
+          $sigFile = Get-ChildItem "src-tauri/target/release/bundle/nsis" -Filter "*.sig" |
+                     Select-Object -First 1
+          $sig     = (Get-Content $sigFile.FullName -Raw).Trim()
+
+          $json = [ordered]@{
+            version   = $version
+            notes     = "StackPage ${{ github.ref_name }}"
+            pub_date  = (Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ")
+            platforms = [ordered]@{
+              "windows-x86_64" = [ordered]@{
+                signature = $sig
+                url       = "https://stackpage.at/updates/download/stackpage_${version}_x64-setup.exe"
+              }
+            }
+          }
+          $json | ConvertTo-Json -Depth 5 | Set-Content website/updates/releases.json
+          Write-Host "releases.json generiert fuer v$version"
+
+      - name: Upload releases.json via FTP
+        if: matrix.platform == 'windows-latest'
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server:     ${{ secrets.FTP_SERVER }}
+          username:   ${{ secrets.FTP_USERNAME }}
+          password:   ${{ secrets.FTP_PASSWORD }}
+          local-dir:  ./website/updates/
+          server-dir: /updates/
+          dangerous-clean-slate: false
+
+      - name: Upload installer via FTP
+        if: matrix.platform == 'windows-latest'
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server:     ${{ secrets.FTP_SERVER }}
+          username:   ${{ secrets.FTP_USERNAME }}
+          password:   ${{ secrets.FTP_PASSWORD }}
+          local-dir:  src-tauri/target/release/bundle/nsis/
+          server-dir: /updates/download/

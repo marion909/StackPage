@@ -1,5 +1,6 @@
 import { useProjectStore } from "../../stores/useProjectStore";
 import { useEditorStore } from "../../stores/useEditorStore";
+import logoIcon from "../../assets/logo-icon.png";
 import { cmd_saveProject } from "../../lib/tauri";
 import { captureEditorThumbnail } from "../../lib/thumbnail";
 import { useI18n } from "../../i18n";
@@ -52,9 +53,7 @@ export default function Topbar() {
         className="flex items-center gap-2 text-[#64748b] hover:text-[#1e293b] transition-colors"
         title={t("topbar.backToDashboard")}
       >
-        <div className="w-6 h-6 bg-[#2563eb] rounded flex items-center justify-center text-white text-xs font-bold">
-          SP
-        </div>
+        <img src={logoIcon} alt="StackPage" className="w-6 h-6 object-contain" />
       </button>
 
       <div className="w-px h-6 bg-[#e2e8f0]" />

@@ -6,8 +6,19 @@ interface Props {
   isEditing: boolean;
 }
 
+const MODE_LABELS: Record<string, string> = {
+  formspree: "Formspree",
+  netlify: "Netlify Forms",
+  mailto: "Mailto",
+};
+
 export default function ContactFormBlock({ block, onChange: _onChange, isEditing }: Props) {
-  const { fields, submitLabel, backgroundColor, paddingTop, paddingBottom } = block.props;
+  const { fields, submitLabel, backgroundColor, paddingTop, paddingBottom, submitMode, formspreeEndpoint, netlifyFormName, recipientEmail, successMessage } = block.props;
+
+  const missingConfig =
+    (submitMode === "formspree" && !formspreeEndpoint) ||
+    (submitMode === "netlify" && !netlifyFormName) ||
+    (submitMode === "mailto" && !recipientEmail);
 
   return (
     <div
@@ -17,8 +28,37 @@ export default function ContactFormBlock({ block, onChange: _onChange, isEditing
         paddingBottom: `${paddingBottom}px`,
       }}
     >
+      {isEditing && (
+        <div
+          style={{
+            maxWidth: "560px",
+            margin: "0 auto 12px",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            padding: "8px 12px",
+            borderRadius: "8px",
+            backgroundColor: missingConfig ? "#fff7ed" : "#eff6ff",
+            border: `1px solid ${missingConfig ? "#fed7aa" : "#bfdbfe"}`,
+            fontSize: "0.8rem",
+            color: missingConfig ? "#c2410c" : "#1d4ed8",
+          }}
+        >
+          <span style={{ fontSize: "1rem" }}>{missingConfig ? "⚠️" : "✉️"}</span>
+          <span>
+            <strong>Submit mode: {MODE_LABELS[submitMode] ?? submitMode}</strong>
+            {missingConfig && " — configure the endpoint in Properties →"}
+            {!missingConfig && submitMode === "formspree" && ` → ${formspreeEndpoint}`}
+            {!missingConfig && submitMode === "netlify" && ` → form name: "${netlifyFormName}"`}
+            {!missingConfig && submitMode === "mailto" && ` → ${recipientEmail}`}
+          </span>
+        </div>
+      )}
+
       <form
         style={{ maxWidth: "560px", margin: "0 auto", display: "flex", flexDirection: "column", gap: "16px" }}
+        data-sp-form
+        data-success={successMessage}
         onSubmit={(e) => isEditing && e.preventDefault()}
       >
         {fields.map((field) => (
@@ -29,8 +69,10 @@ export default function ContactFormBlock({ block, onChange: _onChange, isEditing
             </label>
             {field.type === "textarea" ? (
               <textarea
+                name={field.id}
                 placeholder={field.placeholder ?? field.label}
                 rows={4}
+                required={field.required}
                 disabled={isEditing}
                 style={{
                   border: "1px solid #d1d5db",
@@ -44,7 +86,9 @@ export default function ContactFormBlock({ block, onChange: _onChange, isEditing
             ) : (
               <input
                 type={field.type}
+                name={field.id}
                 placeholder={field.placeholder ?? field.label}
+                required={field.required}
                 disabled={isEditing}
                 style={{
                   border: "1px solid #d1d5db",

@@ -34,7 +34,7 @@ body {
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading);
   line-height: 1.2;
-  margin: 0 0 0.75em;
+  margin: 0;
 }
 
 h1 { font-size: ${theme.headingSizes.h1}rem; }
@@ -42,7 +42,7 @@ h2 { font-size: ${theme.headingSizes.h2}rem; }
 h3 { font-size: ${theme.headingSizes.h3}rem; }
 h4 { font-size: ${theme.headingSizes.h4}rem; }
 
-p { margin: 0 0 1em; line-height: 1.7; }
+p { margin: 0; line-height: 1.7; }
 
 a { color: var(--color-primary); }
 

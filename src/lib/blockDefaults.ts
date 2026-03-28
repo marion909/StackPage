@@ -20,6 +20,8 @@ export function createDefaultBlock(type: BlockType): Block {
       ],
       submitLabel: "Send Message",
       successMessage: "Thank you! We'll be in touch soon.",
+      submitMode: "formspree",
+      formspreeEndpoint: "",
       paddingTop: 48,
       paddingBottom: 48,
     },

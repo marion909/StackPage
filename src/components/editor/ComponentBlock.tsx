@@ -4,6 +4,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { useProjectStore } from "../../stores/useProjectStore";
 import { useEditorStore } from "../../stores/useEditorStore";
 import { usePresetsStore } from "../../stores/usePresetsStore";
+import { useThemeStore } from "../../stores/useThemeStore";
 import type { Block } from "../../types/blocks";
 import BlockRenderer from "../blocks/BlockRenderer";
 
@@ -26,15 +27,20 @@ export default function ComponentBlock({ block, pageId, sectionId }: Props) {
 
   const isSelected = selectedBlockIds.includes(block.id);
   const isPrimary = selectedBlockId === block.id;
+  const theme = useThemeStore((s) => s.theme);
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: block.id,
   });
 
+  const cornerRadius = block.cornerRadius ?? theme.borderRadius;
+
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.4 : 1,
+    borderRadius: `${cornerRadius}px`,
+    overflow: "hidden" as const,
   };
 
   function handlePropChange(props: Partial<Block["props"]>) {
