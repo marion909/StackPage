@@ -171,7 +171,13 @@ export default function PagesPanel() {
               page={page}
               isActive={page.id === activePageId}
               onSelect={() => setActivePageId(page.id)}
-              onRename={(name) => updatePage(page.id, { name })}
+              onRename={(name) => {
+                const updates: { name: string; slug?: string } = { name };
+                if (page.slug !== "index") {
+                  updates.slug = name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "") || page.slug;
+                }
+                updatePage(page.id, updates);
+              }}
               onDelete={() => handleDeletePage(page.id)}
             />
           ))}

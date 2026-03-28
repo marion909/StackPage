@@ -206,4 +206,96 @@ export const PAGE_TEMPLATES: PageTemplate[] = [
       ];
     },
   },
+
+  {
+    id: "product-landing",
+    name: "Product Landing",
+    description: "Hero, product detail, product grid, and footer",
+    emoji: "🛍️",
+    buildSections: () => {
+      const nav = createDefaultBlock("navigation");
+
+      const hero = createDefaultBlock("hero");
+      if (hero.type === "hero") {
+        hero.props.heading = "Discover Our Collection";
+        hero.props.subheading = "Premium products crafted for modern living.";
+        hero.props.ctaLabel = "Shop Now";
+        hero.props.ctaHref = "#products";
+        hero.props.ctaSecondaryLabel = "Learn More";
+        hero.props.ctaSecondaryHref = "#detail";
+        hero.props.minHeight = 500;
+      }
+
+      const detailHeading = createDefaultBlock("heading");
+      if (detailHeading.type === "heading") {
+        detailHeading.props.text = "Featured Product";
+        detailHeading.props.align = "center";
+        detailHeading.props.level = 2;
+      }
+
+      const detail = createDefaultBlock("product-detail");
+
+      const gridHeading = createDefaultBlock("heading");
+      if (gridHeading.type === "heading") {
+        gridHeading.props.text = "More Products";
+        gridHeading.props.align = "center";
+        gridHeading.props.level = 2;
+      }
+
+      const grid = createDefaultBlock("product-grid");
+
+      const cartBtn = createDefaultBlock("cart-button");
+
+      const footer = createDefaultBlock("footer");
+
+      return [
+        section([nav as never]),
+        section([hero as never], { paddingTop: 0, paddingBottom: 0, paddingLeft: 0, paddingRight: 0 }),
+        section([detailHeading as never, detail as never], { paddingTop: 64, paddingBottom: 64 }),
+        section([gridHeading as never, grid as never], { paddingTop: 48, paddingBottom: 64 }),
+        section([cartBtn as never]),
+        section([footer as never], { paddingTop: 0, paddingBottom: 0 }),
+      ];
+    },
+  },
+
+  {
+    id: "shop-showcase",
+    name: "Shop Showcase",
+    description: "Navigation, full product grid showcase, and footer",
+    emoji: "🏪",
+    buildSections: () => {
+      const nav = createDefaultBlock("navigation");
+
+      const heading = createDefaultBlock("heading");
+      if (heading.type === "heading") {
+        heading.props.text = "Our Shop";
+        heading.props.align = "center";
+        heading.props.level = 1;
+      }
+
+      const subtext = createDefaultBlock("text");
+      if (subtext.type === "text") {
+        subtext.props.text = "Browse our full collection of premium products.";
+        subtext.props.align = "center";
+      }
+
+      const grid = createDefaultBlock("product-grid");
+      if (grid.type === "product-grid") {
+        grid.props.columns = 3;
+      }
+
+      const cartBtn = createDefaultBlock("cart-button");
+
+      const footer = createDefaultBlock("footer");
+
+      return [
+        section([nav as never]),
+        section([heading as never, subtext as never], { paddingTop: 64, paddingBottom: 32 }),
+        section([grid as never], { paddingTop: 24, paddingBottom: 80 }),
+        section([cartBtn as never]),
+        section([footer as never], { paddingTop: 0, paddingBottom: 0 }),
+      ];
+    },
+  },
 ];

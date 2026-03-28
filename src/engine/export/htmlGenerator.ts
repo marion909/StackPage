@@ -405,6 +405,90 @@ function generateBlockHTML(block: Block): string {
       return `<div style="${wrapStyle}"><iframe src="${escAttr(embedUrl)}" style="${iframeStyle}" allowfullscreen loading="lazy"></iframe></div>`;
     }
 
+    case "four-column": {
+      const { gap, col1Children, col2Children, col3Children, col4Children, paddingTop, paddingBottom, backgroundColor } = block.props;
+      const style = `background:${backgroundColor ?? "transparent"};padding:${paddingTop}px 0 ${paddingBottom}px`;
+      const colStyle = `flex:1 1 0;min-width:150px`;
+      return `<div style="${style}"><div style="display:flex;flex-wrap:wrap;gap:${gap}px"><div style="${colStyle}">${col1Children.map(generateBlockHTML).join("")}</div><div style="${colStyle}">${col2Children.map(generateBlockHTML).join("")}</div><div style="${colStyle}">${col3Children.map(generateBlockHTML).join("")}</div><div style="${colStyle}">${col4Children.map(generateBlockHTML).join("")}</div></div></div>`;
+    }
+
+    case "asymmetric-column": {
+      const { gap, leftWidth, leftChildren, rightChildren, paddingTop, paddingBottom, backgroundColor, leftVerticalAlign, rightVerticalAlign } = block.props;
+      const rightWidth = 100 - leftWidth;
+      const style = `background:${backgroundColor ?? "transparent"};padding:${paddingTop}px 0 ${paddingBottom}px`;
+      const vMap: Record<string, string> = { top: "flex-start", center: "center", bottom: "flex-end" };
+      const lStyle = `flex:0 0 calc(${leftWidth}% - ${gap / 2}px);min-width:200px;display:flex;flex-direction:column;justify-content:${vMap[leftVerticalAlign ?? "top"]}`;
+      const rStyle = `flex:0 0 calc(${rightWidth}% - ${gap / 2}px);min-width:200px;display:flex;flex-direction:column;justify-content:${vMap[rightVerticalAlign ?? "top"]}`;
+      return `<div style="${style}"><div style="display:flex;flex-wrap:wrap;gap:${gap}px;align-items:stretch"><div style="${lStyle}">${leftChildren.map(generateBlockHTML).join("")}</div><div style="${rStyle}">${rightChildren.map(generateBlockHTML).join("")}</div></div></div>`;
+    }
+
+    case "vertical-stack": {
+      const { gap, align, showDivider, dividerColor, backgroundColor, paddingTop, paddingBottom, paddingLeft, paddingRight, children } = block.props;
+      const alignMap: Record<string, string> = { start: "flex-start", center: "center", end: "flex-end", stretch: "stretch" };
+      const style = `background:${backgroundColor ?? "transparent"};padding:${paddingTop}px ${paddingRight}px ${paddingBottom}px ${paddingLeft}px;display:flex;flex-direction:column;gap:${gap}px;align-items:${alignMap[align ?? "stretch"]}`;
+      const inner = children.map((b: Block, i: number) => {
+        const divider = showDivider && i < children.length - 1 ? `<hr style="border:none;border-top:1px solid ${dividerColor};margin:0;width:100%">` : "";
+        return `<div style="width:${align === "stretch" ? "100%" : "auto"}">${generateBlockHTML(b)}</div>${divider}`;
+      }).join("");
+      return `<div style="${style}">${inner}</div>`;
+    }
+
+    case "masonry-grid": {
+      const { columns, gap, backgroundColor, paddingTop, paddingBottom, items } = block.props;
+      const style = `background:${backgroundColor ?? "transparent"};padding:${paddingTop}px 0 ${paddingBottom}px`;
+      const gridStyle = `display:grid;grid-template-columns:repeat(${columns},1fr);gap:${gap}px;align-items:start`;
+      const colsHtml = (items as Block[][]).map((col) => `<div style="display:flex;flex-direction:column;gap:${gap}px">${col.map(generateBlockHTML).join("")}</div>`).join("");
+      return `<div style="${style}"><div style="${gridStyle}">${colsHtml}</div></div>`;
+    }
+
+    case "product-card": {
+      const { name, description, price, imageSrc, imageAlt, badge, ctaLabel, ctaHref, ctaTarget, paddingTop, paddingBottom, borderRadius, shadow, outlined, backgroundColor } = block.props;
+      const cardStyle = `background:${backgroundColor};border-radius:${borderRadius}px;overflow:hidden;${shadow ? "box-shadow:0 4px 24px rgba(0,0,0,0.10);" : ""}${outlined ? "border:1px solid #e2e8f0;" : ""}padding-bottom:${paddingBottom}px`;
+      const imgHtml = imageSrc ? `<img src="${escAttr(imageSrc)}" alt="${escAttr(imageAlt)}" style="width:100%;aspect-ratio:4/3;object-fit:cover;display:block">` : "";
+      const badgeHtml = badge ? `<span style="position:absolute;top:12px;left:12px;background:#f59e0b;color:#fff;font-size:0.75rem;font-weight:700;padding:3px 10px;border-radius:20px">${escHtml(badge)}</span>` : "";
+      const bodyHtml = `<div style="padding:${paddingTop}px 16px 0"><h3 style="margin:0 0 6px;font-size:1rem;font-weight:700">${escHtml(name)}</h3>${description ? `<p style="margin:0 0 10px;font-size:0.875rem;line-height:1.5;opacity:0.8">${escHtml(description)}</p>` : ""}<p style="margin:0 0 14px;font-size:1.25rem;font-weight:800">${escHtml(price)}</p>${ctaLabel ? `<a href="${escAttr(ctaHref)}" target="${ctaTarget}" style="display:block;text-align:center;background:#2563eb;color:#fff;padding:10px;border-radius:8px;text-decoration:none;font-weight:600;font-size:0.9rem">${escHtml(ctaLabel)}</a>` : ""}</div>`;
+      return `<div style="${cardStyle}"><div style="position:relative">${imgHtml}${badgeHtml}</div>${bodyHtml}</div>`;
+    }
+
+    case "product-grid": {
+      const { items, columns, gap, paddingTop, paddingBottom, cardStyle, borderRadius, backgroundColor } = block.props;
+      const wrapStyle = `background:${backgroundColor ?? "transparent"};padding:${paddingTop}px 0 ${paddingBottom}px`;
+      const gridStyle2 = `display:grid;grid-template-columns:repeat(${columns},1fr);gap:${gap}px`;
+      const shadow = cardStyle === "shadowed" ? "box-shadow:0 4px 24px rgba(0,0,0,0.10);" : "";
+      const border = cardStyle === "outlined" ? "border:1px solid #e2e8f0;" : "";
+      const cardsHtml = (items as Array<{ name: string; description: string; price: string; imageSrc: string; imageAlt: string; badge?: string; ctaLabel: string; ctaHref: string; ctaTarget: string; id: string }>).map((item) => {
+        const imgHtml = item.imageSrc ? `<img src="${escAttr(item.imageSrc)}" alt="${escAttr(item.imageAlt)}" style="width:100%;aspect-ratio:4/3;object-fit:cover;display:block">` : "";
+        const badgeHtml = item.badge ? `<span style="position:absolute;top:10px;left:10px;background:#f59e0b;color:#fff;font-size:0.7rem;font-weight:700;padding:2px 8px;border-radius:20px">${escHtml(item.badge)}</span>` : "";
+        return `<div style="background:#fff;border-radius:${borderRadius}px;overflow:hidden;${shadow}${border}padding-bottom:16px"><div style="position:relative">${imgHtml}${badgeHtml}</div><div style="padding:12px 14px 4px"><h3 style="margin:0 0 4px;font-size:0.95rem;font-weight:700">${escHtml(item.name)}</h3>${item.description ? `<p style="margin:0 0 8px;font-size:0.8rem;line-height:1.5;opacity:0.8">${escHtml(item.description)}</p>` : ""}<p style="margin:0 0 10px;font-size:1.1rem;font-weight:800">${escHtml(item.price)}</p>${item.ctaLabel ? `<a href="${escAttr(item.ctaHref)}" target="${item.ctaTarget}" style="display:block;text-align:center;background:#2563eb;color:#fff;padding:8px;border-radius:8px;text-decoration:none;font-weight:600;font-size:0.85rem">${escHtml(item.ctaLabel)}</a>` : ""}</div></div>`;
+      }).join("");
+      return `<div style="${wrapStyle}"><div style="${gridStyle2}">${cardsHtml}</div></div>`;
+    }
+
+    case "product-detail": {
+      const { name, description, price, imageSrc, imageAlt, badge, ctaLabel, ctaHref, ctaTarget, features, layout, galleryImages, backgroundColor, paddingTop, paddingBottom, accentColor } = block.props;
+      const allImgs = [imageSrc, ...(galleryImages ?? [])].filter(Boolean);
+      const imgHtml = allImgs.length > 0
+        ? `<img src="${escAttr(allImgs[0])}" alt="${escAttr(imageAlt)}" style="width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:12px;display:block">`
+        : `<div style="width:100%;aspect-ratio:4/3;background:#f1f5f9;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#94a3b8">No image</div>`;
+      const badgeHtml = badge ? `<span style="position:absolute;top:14px;left:14px;background:${accentColor ?? "#f59e0b"};color:#fff;font-size:0.75rem;font-weight:700;padding:4px 12px;border-radius:20px">${escHtml(badge)}</span>` : "";
+      const galleryHtml = allImgs.length > 1 ? `<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">${allImgs.map((src) => `<img src="${escAttr(src)}" style="width:64px;height:64px;object-fit:cover;border-radius:8px;border:2px solid #e2e8f0">`).join("")}</div>` : "";
+      const featuresHtml = features && features.length > 0 ? `<ul style="list-style:none;padding:0;margin:0 0 24px">${features.map((f: string) => `<li style="display:flex;align-items:center;gap:8px;padding:6px 0;font-size:0.9rem"><span style="color:${accentColor ?? "#f59e0b"};font-weight:700">✓</span>${escHtml(f)}</li>`).join("")}</ul>` : "";
+      const btnHtml = ctaLabel ? `<a href="${escAttr(ctaHref)}" target="${ctaTarget}" style="display:inline-block;background:#2563eb;color:#fff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:700;font-size:1rem">${escHtml(ctaLabel)}</a>` : "";
+      const imgSection = `<div style="flex:1 1 50%;min-width:280px"><div style="position:relative">${imgHtml}${badgeHtml}</div>${galleryHtml}</div>`;
+      const infoSection = `<div style="flex:1 1 50%;min-width:280px"><h2 style="margin:0 0 10px;font-size:1.75rem;font-weight:800">${escHtml(name)}</h2><p style="margin:0 0 16px;font-size:2rem;font-weight:800;color:#2563eb">${escHtml(price)}</p>${description ? `<p style="margin:0 0 20px;font-size:1rem;line-height:1.7;opacity:0.85">${escHtml(description)}</p>` : ""}${featuresHtml}${btnHtml}</div>`;
+      const isTop = layout === "image-top";
+      const isRight = layout === "image-right";
+      const innerStyle = isTop ? "display:flex;flex-direction:column;gap:24px;max-width:800px;margin:0 auto" : `display:flex;flex-wrap:wrap;gap:40px;max-width:1100px;margin:0 auto${isRight ? ";flex-direction:row-reverse" : ""}`;
+      return `<div style="background:${backgroundColor};padding:${paddingTop}px 16px ${paddingBottom}px"><div style="${innerStyle}">${isRight ? infoSection + imgSection : imgSection + infoSection}</div></div>`;
+    }
+
+    case "cart-button": {
+      const { position, backgroundColor: bgColor, iconColor, label } = block.props;
+      const posStyle = position === "inline" ? "display:inline-flex" : `position:fixed;${position === "fixed-bottom-left" ? "left:24px" : "right:24px"};bottom:24px;z-index:1000`;
+      const btnStyle = `background:${bgColor ?? "#2563eb"};color:${iconColor ?? "#fff"};border:none;border-radius:50px;padding:12px 20px;display:flex;align-items:center;gap:8px;font-weight:700;font-size:0.95rem;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,0.18)`;
+      return `<div style="${posStyle}"><button id="stackpage-cart-btn" onclick="toggleStackpageCart()" style="${btnStyle}"><span style="font-size:1.2rem">🛒</span>${label ? `<span>${escHtml(label)}</span>` : ""}<span id="stackpage-cart-count" style="background:#ef4444;color:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:800">0</span></button></div>`;
+    }
+
     default:
       return "";
   }

@@ -82,3 +82,88 @@ Status: **v1.0 feature-complete** — all planned features implemented.
 - [x] **Localization (i18n)** — English + German UI strings
 - [x] **Crash reporting / telemetry opt-in**
 - [x] **Comprehensive test suite** — unit tests for the HTML generator, integration tests for store mutations
+
+---
+
+## v1.1 — Layout Blocks
+
+Goal: give users much more control over page structure beyond 2- and 3-column grids.
+
+### New block types
+
+- [x] **4-Column block** (`four-column`) — equal-width quad grid, `stackOnMobile`, gap & padding controls; same child-block pattern as `two-column` / `three-column`
+- [x] **Asymmetric Column block** (`asymmetric-column`) — two columns with a freely configurable split ratio (sidebar + content, e.g. 25/75, 33/67, 40/60, 66/34 …), selectable via dropdown presets plus a custom "left width %" slider
+- [x] **Vertical Stack block** (`vertical-stack`) — a single column that stacks child blocks with configurable gap, alignment (start / center / end / stretch), and an optional divider between items; useful for feature lists, step-by-step flows, and sidebar content
+- [x] **Masonry Grid block** (`masonry-grid`) — CSS-columns-based masonry layout; configurable column count (2–5) and gap; each child block is an independent card slot
+
+### Changes to existing layout blocks
+
+- [x] **TwoColumnBlock / ThreeColumnBlock** — add individual per-column background color and vertical-alignment options (top / center / bottom)
+- [x] **Sidebar category in palette** — group `four-column`, `asymmetric-column`, `vertical-stack`, `masonry-grid` under the existing "Layout" category in the left sidebar
+
+### Type-system changes (`src/types/blocks.ts`)
+
+- [x] Add `FourColumnProps` / `FourColumnBlock` interface — mirrors `ThreeColumnProps` plus `col4Children`
+- [x] Add `AsymmetricColumnProps` / `AsymmetricColumnBlock` — `leftWidth: number`, split ratio presets, left/right children
+- [x] Add `VerticalStackProps` / `VerticalStackBlock` — `gap: number`, `align: string`, `showDivider: boolean`, `children: Block[]`
+- [x] Add `MasonryGridProps` / `MasonryGridBlock` — `columns: 2|3|4|5`, `gap: number`, `items: Block[][]`
+- [x] Extend `BlockType` union and `BLOCK_TYPES` metadata array with the four new types
+
+### Rendering & export
+
+- [x] Implement React render components in `src/components/blocks/`
+- [x] Add HTML export templates for each new block in `src/engine/export/htmlGenerator.ts`
+- [x] Add default props in `src/lib/blockDefaults.ts`
+- [x] Add right-sidebar property panels (`src/components/editor/Sidebar/`) for each new block
+- [x] Add unit tests for new block HTML output in `htmlGenerator.test.ts`
+
+---
+
+## v1.2 — Shop Components
+
+Goal: allow users to build static product showcase pages and link through to any checkout system (Stripe, Shopify Buy Button, WooCommerce, custom URL).
+
+> **Scope:** StackPage exports static HTML — there is no server-side cart or order management. All "cart" interactions are implemented client-side (localStorage) with a small injected JS snippet, or are simply deep-links to an external store.
+
+### New block types
+
+- [x] **Product Card block** (`product-card`) — single product tile with image, name, short description, price, optional badge (e.g. "Sale", "New"), and a CTA button; fully themeable
+- [x] **Product Grid block** (`product-grid`) — 2–4 column grid of `ProductCardItem` objects (defined inline, not a separate block); sortable item list in the right sidebar; column count & gap controls
+- [x] **Product Detail block** (`product-detail`) — hero-style full-width product view with large image (or image gallery thumbnails), name, price, description text, feature bullets, and a primary CTA; layout variants: image-left, image-right, image-top
+- [x] **Cart Button / Mini Cart block** (`cart-button`) — floating or inline cart icon showing item count (stored in `localStorage`); clicking expands a slide-out panel listing added items; generates a small self-contained JS snippet on export
+
+### Data model (`src/types/blocks.ts`)
+
+```ts
+interface ProductCardItem {
+  id: string;
+  name: string;
+  description: string;
+  price: string;          // display string, e.g. "€ 29.90"
+  imageSrc: string;
+  imageAlt: string;
+  badge?: string;
+  ctaLabel: string;
+  ctaHref: string;        // external checkout / product link
+  ctaTarget: "_self" | "_blank";
+}
+```
+
+- [x] `ProductCardProps` — single `ProductCardItem` + layout props (padding, border, shadow, borderRadius)
+- [x] `ProductGridProps` — `items: ProductCardItem[]`, `columns: 2|3|4`, `gap`, padding, `cardStyle` (flat / outlined / shadowed)
+- [x] `ProductDetailProps` — `item: ProductCardItem`, `features: string[]`, `layout: "image-left"|"image-right"|"image-top"`, `showImageGallery: boolean`, `galleryImages: string[]`
+- [x] `CartButtonProps` — `position: "fixed-bottom-right"|"fixed-bottom-left"|"inline"`, `backgroundColor`, `iconColor`, `label`
+
+### Rendering & export
+
+- [x] React render components in `src/components/blocks/shop/`
+- [x] `CartButton` generates a `<script>` block in the HTML export (`src/engine/export/jsGenerator.ts`) — a ~50-line vanilla JS snippet for localStorage cart state; no external dependencies
+- [x] HTML export templates for all four blocks in `htmlGenerator.ts`
+- [x] Default props in `blockDefaults.ts`
+- [x] Right-sidebar property panels with an inline product list editor (add / remove / reorder items)
+- [x] New "Shop" category in `BLOCK_TYPES` metadata and the left panel palette
+
+### Page templates (v1.2 addition)
+
+- [x] **Product Landing Page** template — Hero + Product Detail + Product Grid (3 related items) + CTA section
+- [x] **Shop Showcase** template — Navigation + Product Grid (6 items, 3 cols) + Footer

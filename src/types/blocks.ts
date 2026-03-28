@@ -6,6 +6,10 @@ export type BlockType =
   | "container"
   | "two-column"
   | "three-column"
+  | "four-column"
+  | "asymmetric-column"
+  | "vertical-stack"
+  | "masonry-grid"
   | "gallery"
   | "contact-form"
   | "footer"
@@ -17,7 +21,11 @@ export type BlockType =
   | "testimonial"
   | "pricing-table"
   | "icon"
-  | "map";
+  | "map"
+  | "product-card"
+  | "product-grid"
+  | "product-detail"
+  | "cart-button";
 
 interface BaseBlock {
   id: string;
@@ -364,6 +372,142 @@ export interface MapBlock extends BaseBlock {
   props: MapBlockProps;
 }
 
+// ─── Four Column ──────────────────────────────────────────────────────────
+export interface FourColumnProps {
+  gap: number;
+  col1Children: Block[];
+  col2Children: Block[];
+  col3Children: Block[];
+  col4Children: Block[];
+  stackOnMobile: boolean;
+  backgroundColor?: string;
+  paddingTop: number;
+  paddingBottom: number;
+}
+export interface FourColumnBlock extends BaseBlock {
+  type: "four-column";
+  props: FourColumnProps;
+}
+
+// ─── Asymmetric Column ────────────────────────────────────────────────────
+export interface AsymmetricColumnProps {
+  gap: number;
+  leftWidth: number; // percentage (e.g. 33)
+  leftChildren: Block[];
+  rightChildren: Block[];
+  stackOnMobile: boolean;
+  backgroundColor?: string;
+  paddingTop: number;
+  paddingBottom: number;
+  leftVerticalAlign: "top" | "center" | "bottom";
+  rightVerticalAlign: "top" | "center" | "bottom";
+}
+export interface AsymmetricColumnBlock extends BaseBlock {
+  type: "asymmetric-column";
+  props: AsymmetricColumnProps;
+}
+
+// ─── Vertical Stack ───────────────────────────────────────────────────────
+export interface VerticalStackProps {
+  gap: number;
+  align: "start" | "center" | "end" | "stretch";
+  showDivider: boolean;
+  dividerColor: string;
+  backgroundColor?: string;
+  paddingTop: number;
+  paddingBottom: number;
+  paddingLeft: number;
+  paddingRight: number;
+  children: Block[];
+}
+export interface VerticalStackBlock extends BaseBlock {
+  type: "vertical-stack";
+  props: VerticalStackProps;
+}
+
+// ─── Masonry Grid ─────────────────────────────────────────────────────────
+export interface MasonryGridProps {
+  columns: 2 | 3 | 4 | 5;
+  gap: number;
+  backgroundColor?: string;
+  paddingTop: number;
+  paddingBottom: number;
+  items: Block[][];
+}
+export interface MasonryGridBlock extends BaseBlock {
+  type: "masonry-grid";
+  props: MasonryGridProps;
+}
+
+// ─── Product Card ─────────────────────────────────────────────────────────
+export interface ProductCardItem {
+  id: string;
+  name: string;
+  description: string;
+  price: string;
+  imageSrc: string;
+  imageAlt: string;
+  badge?: string;
+  ctaLabel: string;
+  ctaHref: string;
+  ctaTarget: "_self" | "_blank";
+}
+export interface ProductCardProps extends ProductCardItem {
+  paddingTop: number;
+  paddingBottom: number;
+  borderRadius: number;
+  shadow: boolean;
+  outlined: boolean;
+  backgroundColor: string;
+}
+export interface ProductCardBlock extends BaseBlock {
+  type: "product-card";
+  props: ProductCardProps;
+}
+
+// ─── Product Grid ─────────────────────────────────────────────────────────
+export interface ProductGridProps {
+  items: ProductCardItem[];
+  columns: 2 | 3 | 4;
+  gap: number;
+  paddingTop: number;
+  paddingBottom: number;
+  cardStyle: "flat" | "outlined" | "shadowed";
+  borderRadius: number;
+  backgroundColor?: string;
+}
+export interface ProductGridBlock extends BaseBlock {
+  type: "product-grid";
+  props: ProductGridProps;
+}
+
+// ─── Product Detail ───────────────────────────────────────────────────────
+export interface ProductDetailProps extends ProductCardItem {
+  features: string[];
+  layout: "image-left" | "image-right" | "image-top";
+  galleryImages: string[];
+  backgroundColor: string;
+  paddingTop: number;
+  paddingBottom: number;
+  accentColor: string;
+}
+export interface ProductDetailBlock extends BaseBlock {
+  type: "product-detail";
+  props: ProductDetailProps;
+}
+
+// ─── Cart Button ──────────────────────────────────────────────────────────
+export interface CartButtonProps {
+  position: "fixed-bottom-right" | "fixed-bottom-left" | "inline";
+  backgroundColor: string;
+  iconColor: string;
+  label: string;
+}
+export interface CartButtonBlock extends BaseBlock {
+  type: "cart-button";
+  props: CartButtonProps;
+}
+
 export type Block =
   | HeadingBlock
   | TextBlock
@@ -372,6 +516,10 @@ export type Block =
   | ContainerBlock
   | TwoColumnBlock
   | ThreeColumnBlock
+  | FourColumnBlock
+  | AsymmetricColumnBlock
+  | VerticalStackBlock
+  | MasonryGridBlock
   | GalleryBlock
   | ContactFormBlock
   | FooterBlock
@@ -383,7 +531,11 @@ export type Block =
   | TestimonialBlock
   | PricingTableBlock
   | IconBlock
-  | MapBlock;
+  | MapBlock
+  | ProductCardBlock
+  | ProductGridBlock
+  | ProductDetailBlock
+  | CartButtonBlock;
 
 // Block type display metadata
 export const BLOCK_TYPES: { type: BlockType; label: string; icon: string; category: string }[] = [
@@ -404,6 +556,14 @@ export const BLOCK_TYPES: { type: BlockType; label: string; icon: string; catego
   { type: "container", label: "Container", icon: "□", category: "Layout" },
   { type: "two-column", label: "2 Columns", icon: "⊟", category: "Layout" },
   { type: "three-column", label: "3 Columns", icon: "⊞", category: "Layout" },
+  { type: "four-column", label: "4 Columns", icon: "⦶", category: "Layout" },
+  { type: "asymmetric-column", label: "Asymmetric", icon: "⊡", category: "Layout" },
+  { type: "vertical-stack", label: "Vertical Stack", icon: "≡", category: "Layout" },
+  { type: "masonry-grid", label: "Masonry Grid", icon: "⊹", category: "Layout" },
   { type: "contact-form", label: "Contact Form", icon: "✉", category: "Interactive" },
   { type: "footer", label: "Footer", icon: "▬", category: "Layout" },
+  { type: "product-card", label: "Product Card", icon: "🛍", category: "Shop" },
+  { type: "product-grid", label: "Product Grid", icon: "🗂", category: "Shop" },
+  { type: "product-detail", label: "Product Detail", icon: "📦", category: "Shop" },
+  { type: "cart-button", label: "Cart Button", icon: "🛒", category: "Shop" },
 ];

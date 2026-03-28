@@ -1,6 +1,6 @@
 import { HexColorPicker } from "react-colorful";
 import { useState } from "react";
-import type { Block, GalleryImage, NavLink, FooterLink, FormField, SlideItem, TestimonialItem, PricingPlan, PricingFeature } from "../../../types/blocks";
+import type { Block, GalleryImage, NavLink, FooterLink, FormField, SlideItem, TestimonialItem, PricingPlan, PricingFeature, ProductCardItem } from "../../../types/blocks";
 import { ICON_NAMES } from "../../blocks/IconBlock";
 import { useProjectStore } from "../../../stores/useProjectStore";
 import { nanoid } from "../../../types/nanoid";
@@ -935,6 +935,281 @@ export default function PropertiesPanel({ block, pageId, sectionId }: Props) {
           </Field>
           <Field label="Border Radius (px)">
             <NumberInput value={block.props.borderRadius ?? 0} onChange={(v) => update({ borderRadius: v || undefined })} min={0} max={32} />
+          </Field>
+        </>
+      )}
+
+      {block.type === "four-column" && (
+        <>
+          <Field label="Gap (px)">
+            <NumberInput value={block.props.gap} onChange={(v) => update({ gap: v })} min={0} max={80} />
+          </Field>
+          <Field label="Padding Top (px)">
+            <NumberInput value={block.props.paddingTop} onChange={(v) => update({ paddingTop: v })} min={0} max={200} />
+          </Field>
+          <Field label="Padding Bottom (px)">
+            <NumberInput value={block.props.paddingBottom} onChange={(v) => update({ paddingBottom: v })} min={0} max={200} />
+          </Field>
+          <Field label="Background Color">
+            <ColorInput value={block.props.backgroundColor ?? ""} onChange={(v) => update({ backgroundColor: v })} />
+          </Field>
+        </>
+      )}
+
+      {block.type === "asymmetric-column" && (
+        <>
+          <Field label="Left Column Width (%)">
+            <NumberInput value={block.props.leftWidth} onChange={(v) => update({ leftWidth: v })} min={20} max={80} />
+          </Field>
+          <Field label="Gap (px)">
+            <NumberInput value={block.props.gap} onChange={(v) => update({ gap: v })} min={0} max={80} />
+          </Field>
+          <Field label="Left Vertical Align">
+            <Select value={block.props.leftVerticalAlign ?? "top"} onChange={(v) => update({ leftVerticalAlign: v })} options={[{ label: "Top", value: "top" }, { label: "Center", value: "center" }, { label: "Bottom", value: "bottom" }]} />
+          </Field>
+          <Field label="Right Vertical Align">
+            <Select value={block.props.rightVerticalAlign ?? "top"} onChange={(v) => update({ rightVerticalAlign: v })} options={[{ label: "Top", value: "top" }, { label: "Center", value: "center" }, { label: "Bottom", value: "bottom" }]} />
+          </Field>
+          <Field label="Padding Top (px)">
+            <NumberInput value={block.props.paddingTop} onChange={(v) => update({ paddingTop: v })} min={0} max={200} />
+          </Field>
+          <Field label="Padding Bottom (px)">
+            <NumberInput value={block.props.paddingBottom} onChange={(v) => update({ paddingBottom: v })} min={0} max={200} />
+          </Field>
+          <Field label="Background Color">
+            <ColorInput value={block.props.backgroundColor ?? ""} onChange={(v) => update({ backgroundColor: v })} />
+          </Field>
+        </>
+      )}
+
+      {block.type === "vertical-stack" && (
+        <>
+          <Field label="Gap (px)">
+            <NumberInput value={block.props.gap} onChange={(v) => update({ gap: v })} min={0} max={80} />
+          </Field>
+          <Field label="Align">
+            <Select value={block.props.align ?? "stretch"} onChange={(v) => update({ align: v })} options={[{ label: "Stretch", value: "stretch" }, { label: "Start", value: "start" }, { label: "Center", value: "center" }, { label: "End", value: "end" }]} />
+          </Field>
+          <Field label="Show Divider">
+            <input type="checkbox" checked={block.props.showDivider ?? false} onChange={(e) => update({ showDivider: e.target.checked })} />
+          </Field>
+          {block.props.showDivider && (
+            <Field label="Divider Color">
+              <ColorInput value={block.props.dividerColor ?? "#e2e8f0"} onChange={(v) => update({ dividerColor: v })} />
+            </Field>
+          )}
+          <Field label="Padding Top (px)">
+            <NumberInput value={block.props.paddingTop} onChange={(v) => update({ paddingTop: v })} min={0} max={200} />
+          </Field>
+          <Field label="Padding Bottom (px)">
+            <NumberInput value={block.props.paddingBottom} onChange={(v) => update({ paddingBottom: v })} min={0} max={200} />
+          </Field>
+          <Field label="Padding Left (px)">
+            <NumberInput value={block.props.paddingLeft} onChange={(v) => update({ paddingLeft: v })} min={0} max={100} />
+          </Field>
+          <Field label="Padding Right (px)">
+            <NumberInput value={block.props.paddingRight} onChange={(v) => update({ paddingRight: v })} min={0} max={100} />
+          </Field>
+          <Field label="Background Color">
+            <ColorInput value={block.props.backgroundColor ?? ""} onChange={(v) => update({ backgroundColor: v })} />
+          </Field>
+        </>
+      )}
+
+      {block.type === "masonry-grid" && (
+        <>
+          <Field label="Columns">
+            <NumberInput value={block.props.columns} onChange={(v) => update({ columns: v })} min={2} max={5} />
+          </Field>
+          <Field label="Gap (px)">
+            <NumberInput value={block.props.gap} onChange={(v) => update({ gap: v })} min={0} max={60} />
+          </Field>
+          <Field label="Padding Top (px)">
+            <NumberInput value={block.props.paddingTop} onChange={(v) => update({ paddingTop: v })} min={0} max={200} />
+          </Field>
+          <Field label="Padding Bottom (px)">
+            <NumberInput value={block.props.paddingBottom} onChange={(v) => update({ paddingBottom: v })} min={0} max={200} />
+          </Field>
+          <Field label="Background Color">
+            <ColorInput value={block.props.backgroundColor ?? ""} onChange={(v) => update({ backgroundColor: v })} />
+          </Field>
+        </>
+      )}
+
+      {block.type === "product-card" && (
+        <>
+          <Field label="Product Name">
+            <TextInput value={block.props.name} onChange={(v) => update({ name: v })} />
+          </Field>
+          <Field label="Description">
+            <TextInput value={block.props.description ?? ""} onChange={(v) => update({ description: v })} />
+          </Field>
+          <Field label="Price">
+            <TextInput value={block.props.price} onChange={(v) => update({ price: v })} />
+          </Field>
+          <Field label="Badge (optional)">
+            <TextInput value={block.props.badge ?? ""} onChange={(v) => update({ badge: v || undefined })} />
+          </Field>
+          <Field label="Image URL">
+            <TextInput value={block.props.imageSrc ?? ""} onChange={(v) => update({ imageSrc: v })} />
+          </Field>
+          <Field label="Image Alt">
+            <TextInput value={block.props.imageAlt ?? ""} onChange={(v) => update({ imageAlt: v })} />
+          </Field>
+          <Field label="Button Label">
+            <TextInput value={block.props.ctaLabel ?? ""} onChange={(v) => update({ ctaLabel: v })} />
+          </Field>
+          <Field label="Button Link">
+            <TextInput value={block.props.ctaHref ?? ""} onChange={(v) => update({ ctaHref: v })} />
+          </Field>
+          <Field label="Button Target">
+            <Select value={block.props.ctaTarget ?? "_self"} onChange={(v) => update({ ctaTarget: v })} options={[{ label: "Same tab", value: "_self" }, { label: "New tab", value: "_blank" }]} />
+          </Field>
+          <Field label="Shadow">
+            <input type="checkbox" checked={block.props.shadow ?? true} onChange={(e) => update({ shadow: e.target.checked })} />
+          </Field>
+          <Field label="Outlined">
+            <input type="checkbox" checked={block.props.outlined ?? false} onChange={(e) => update({ outlined: e.target.checked })} />
+          </Field>
+          <Field label="Border Radius (px)">
+            <NumberInput value={block.props.borderRadius ?? 12} onChange={(v) => update({ borderRadius: v })} min={0} max={48} />
+          </Field>
+          <Field label="Background Color">
+            <ColorInput value={block.props.backgroundColor ?? "#ffffff"} onChange={(v) => update({ backgroundColor: v })} />
+          </Field>
+          <Field label="Padding Top (px)">
+            <NumberInput value={block.props.paddingTop ?? 16} onChange={(v) => update({ paddingTop: v })} min={0} max={100} />
+          </Field>
+          <Field label="Padding Bottom (px)">
+            <NumberInput value={block.props.paddingBottom ?? 16} onChange={(v) => update({ paddingBottom: v })} min={0} max={100} />
+          </Field>
+        </>
+      )}
+
+      {block.type === "product-grid" && (
+        <>
+          <Field label="Columns">
+            <NumberInput value={block.props.columns} onChange={(v) => update({ columns: v })} min={2} max={4} />
+          </Field>
+          <Field label="Gap (px)">
+            <NumberInput value={block.props.gap} onChange={(v) => update({ gap: v })} min={0} max={60} />
+          </Field>
+          <Field label="Card Style">
+            <Select value={block.props.cardStyle ?? "shadowed"} onChange={(v) => update({ cardStyle: v })} options={[{ label: "Shadowed", value: "shadowed" }, { label: "Outlined", value: "outlined" }, { label: "Flat", value: "flat" }]} />
+          </Field>
+          <Field label="Border Radius (px)">
+            <NumberInput value={block.props.borderRadius ?? 12} onChange={(v) => update({ borderRadius: v })} min={0} max={48} />
+          </Field>
+          <Field label="Padding Top (px)">
+            <NumberInput value={block.props.paddingTop} onChange={(v) => update({ paddingTop: v })} min={0} max={200} />
+          </Field>
+          <Field label="Padding Bottom (px)">
+            <NumberInput value={block.props.paddingBottom} onChange={(v) => update({ paddingBottom: v })} min={0} max={200} />
+          </Field>
+          <Field label="Background Color">
+            <ColorInput value={block.props.backgroundColor ?? ""} onChange={(v) => update({ backgroundColor: v })} />
+          </Field>
+          <div className="mb-2">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[10px] font-semibold text-[#94a3b8] uppercase tracking-wider">Products</span>
+              <button
+                onClick={() => update({ items: [...block.props.items, { id: nanoid(), name: "Product", description: "", price: "$0.00", imageSrc: "", imageAlt: "", badge: "", ctaLabel: "Buy Now", ctaHref: "#", ctaTarget: "_self" } as ProductCardItem] })}
+                className="text-[10px] text-[#2563eb] hover:underline"
+              >+ Add</button>
+            </div>
+            <div className="space-y-3">
+              {block.props.items.map((item: ProductCardItem, idx: number) => (
+                <div key={item.id} className="border border-[#e2e8f0] rounded p-2 space-y-1">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[10px] font-medium text-[#374151]">Item {idx + 1}</span>
+                    <button onClick={() => update({ items: block.props.items.filter((_: ProductCardItem, i: number) => i !== idx) })} className="text-[10px] text-[#ef4444]">Remove</button>
+                  </div>
+                  <input type="text" placeholder="Name" value={item.name} onChange={(e) => update({ items: block.props.items.map((it: ProductCardItem, i: number) => i === idx ? { ...it, name: e.target.value } : it) })} className="w-full border border-[#d1d5db] rounded px-1 py-0.5 text-xs" />
+                  <input type="text" placeholder="Price" value={item.price} onChange={(e) => update({ items: block.props.items.map((it: ProductCardItem, i: number) => i === idx ? { ...it, price: e.target.value } : it) })} className="w-full border border-[#d1d5db] rounded px-1 py-0.5 text-xs" />
+                  <input type="text" placeholder="Image URL" value={item.imageSrc} onChange={(e) => update({ items: block.props.items.map((it: ProductCardItem, i: number) => i === idx ? { ...it, imageSrc: e.target.value } : it) })} className="w-full border border-[#d1d5db] rounded px-1 py-0.5 text-xs" />
+                  <input type="text" placeholder="Button label" value={item.ctaLabel} onChange={(e) => update({ items: block.props.items.map((it: ProductCardItem, i: number) => i === idx ? { ...it, ctaLabel: e.target.value } : it) })} className="w-full border border-[#d1d5db] rounded px-1 py-0.5 text-xs" />
+                  <input type="text" placeholder="Button link" value={item.ctaHref} onChange={(e) => update({ items: block.props.items.map((it: ProductCardItem, i: number) => i === idx ? { ...it, ctaHref: e.target.value } : it) })} className="w-full border border-[#d1d5db] rounded px-1 py-0.5 text-xs" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
+
+      {block.type === "product-detail" && (
+        <>
+          <Field label="Product Name">
+            <TextInput value={block.props.name} onChange={(v) => update({ name: v })} />
+          </Field>
+          <Field label="Description">
+            <TextInput value={block.props.description ?? ""} onChange={(v) => update({ description: v })} />
+          </Field>
+          <Field label="Price">
+            <TextInput value={block.props.price} onChange={(v) => update({ price: v })} />
+          </Field>
+          <Field label="Badge (optional)">
+            <TextInput value={block.props.badge ?? ""} onChange={(v) => update({ badge: v || undefined })} />
+          </Field>
+          <Field label="Image URL">
+            <TextInput value={block.props.imageSrc ?? ""} onChange={(v) => update({ imageSrc: v })} />
+          </Field>
+          <Field label="Image Alt">
+            <TextInput value={block.props.imageAlt ?? ""} onChange={(v) => update({ imageAlt: v })} />
+          </Field>
+          <Field label="Button Label">
+            <TextInput value={block.props.ctaLabel ?? ""} onChange={(v) => update({ ctaLabel: v })} />
+          </Field>
+          <Field label="Button Link">
+            <TextInput value={block.props.ctaHref ?? ""} onChange={(v) => update({ ctaHref: v })} />
+          </Field>
+          <Field label="Button Target">
+            <Select value={block.props.ctaTarget ?? "_self"} onChange={(v) => update({ ctaTarget: v })} options={[{ label: "Same tab", value: "_self" }, { label: "New tab", value: "_blank" }]} />
+          </Field>
+          <Field label="Layout">
+            <Select value={block.props.layout ?? "image-left"} onChange={(v) => update({ layout: v })} options={[{ label: "Image Left", value: "image-left" }, { label: "Image Right", value: "image-right" }, { label: "Image Top", value: "image-top" }]} />
+          </Field>
+          <Field label="Accent Color">
+            <ColorInput value={block.props.accentColor ?? "#f59e0b"} onChange={(v) => update({ accentColor: v })} />
+          </Field>
+          <Field label="Background Color">
+            <ColorInput value={block.props.backgroundColor ?? "#ffffff"} onChange={(v) => update({ backgroundColor: v })} />
+          </Field>
+          <Field label="Padding Top (px)">
+            <NumberInput value={block.props.paddingTop ?? 40} onChange={(v) => update({ paddingTop: v })} min={0} max={200} />
+          </Field>
+          <Field label="Padding Bottom (px)">
+            <NumberInput value={block.props.paddingBottom ?? 40} onChange={(v) => update({ paddingBottom: v })} min={0} max={200} />
+          </Field>
+          <div className="mb-2">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[10px] font-semibold text-[#94a3b8] uppercase tracking-wider">Features List</span>
+              <button onClick={() => update({ features: [...(block.props.features ?? []), "New feature"] })} className="text-[10px] text-[#2563eb] hover:underline">+ Add</button>
+            </div>
+            <div className="space-y-1">
+              {(block.props.features ?? []).map((feat: string, idx: number) => (
+                <div key={idx} className="flex items-center gap-1">
+                  <input type="text" value={feat} onChange={(e) => update({ features: block.props.features.map((f: string, i: number) => i === idx ? e.target.value : f) })} className="flex-1 border border-[#d1d5db] rounded px-1 py-0.5 text-xs focus:outline-none" />
+                  <button onClick={() => update({ features: block.props.features.filter((_: string, i: number) => i !== idx) })} className="text-[10px] text-[#ef4444]">×</button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
+
+      {block.type === "cart-button" && (
+        <>
+          <Field label="Position">
+            <Select value={block.props.position ?? "fixed-bottom-right"} onChange={(v) => update({ position: v })} options={[{ label: "Fixed Bottom Right", value: "fixed-bottom-right" }, { label: "Fixed Bottom Left", value: "fixed-bottom-left" }, { label: "Inline", value: "inline" }]} />
+          </Field>
+          <Field label="Label (optional)">
+            <TextInput value={block.props.label ?? ""} onChange={(v) => update({ label: v || undefined })} />
+          </Field>
+          <Field label="Background Color">
+            <ColorInput value={block.props.backgroundColor ?? "#2563eb"} onChange={(v) => update({ backgroundColor: v })} />
+          </Field>
+          <Field label="Icon Color">
+            <ColorInput value={block.props.iconColor ?? "#ffffff"} onChange={(v) => update({ iconColor: v })} />
           </Field>
         </>
       )}

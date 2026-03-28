@@ -1,3 +1,4 @@
+import { useThemeStore } from "../../stores/useThemeStore";
 import type { FooterBlock, FooterBlockProps } from "../../types/blocks";
 
 interface Props {
@@ -8,6 +9,7 @@ interface Props {
 
 export default function FooterBlock({ block, onChange: _onChange, isEditing: _isEditing }: Props) {
   const { companyName, copyrightText, links, backgroundColor, textColor, align, paddingTop, paddingBottom } = block.props;
+  const theme = useThemeStore((s) => s.theme);
 
   return (
     <footer
@@ -19,7 +21,7 @@ export default function FooterBlock({ block, onChange: _onChange, isEditing: _is
         textAlign: align as any,
       }}
     >
-      <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "0 16px" }}>
+      <div style={{ maxWidth: `${theme.maxWidth}px`, margin: "0 auto", padding: "0 16px" }}>
         <p style={{ fontWeight: 700, marginBottom: "8px", fontSize: "1rem" }}>{companyName}</p>
         <nav style={{ display: "flex", gap: "16px", justifyContent: align === "center" ? "center" : align === "right" ? "flex-end" : "flex-start", flexWrap: "wrap", marginBottom: "12px" }}>
           {links.map((link) => (

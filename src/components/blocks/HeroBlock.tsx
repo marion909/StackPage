@@ -40,7 +40,7 @@ export default function HeroBlock({ block }: Props) {
       {overlayColor && (
         <div style={{ position: "absolute", inset: 0, backgroundColor: overlayColor }} />
       )}
-      <div style={{ position: "relative", zIndex: 1, width: "100%", maxWidth: "800px", margin: "0 auto", padding: "0 24px" }}>
+      <div style={{ position: "relative", zIndex: 1, width: "100%", maxWidth: `${theme.maxWidth}px`, margin: "0 auto", padding: "0 24px" }}>
         <div style={{ display: "flex", flexDirection: "column", alignItems: alignMap[textAlign], textAlign: textAlign as React.CSSProperties["textAlign"] }}>
           <h1 style={{ color: headingColor, fontSize: "3rem", fontWeight: 800, lineHeight: 1.1, margin: "0 0 16px" }}>
             {heading}

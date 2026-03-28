@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useThemeStore } from "../../stores/useThemeStore";
 import type { NavigationBlock, NavigationProps } from "../../types/blocks";
 
 interface Props {
@@ -10,6 +11,7 @@ interface Props {
 export default function NavigationBlock({ block, onChange: _onChange, isEditing }: Props) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { logoText, logoImageSrc, logoType, links, sticky, backgroundColor, textColor } = block.props;
+  const theme = useThemeStore((s) => s.theme);
 
   return (
     <nav
@@ -22,7 +24,7 @@ export default function NavigationBlock({ block, onChange: _onChange, isEditing 
         borderBottom: "1px solid rgba(0,0,0,0.08)",
       }}
     >
-      <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "0 16px", display: "flex", alignItems: "center", justifyContent: "space-between", height: "64px" }}>
+      <div style={{ maxWidth: `${theme.maxWidth}px`, margin: "0 auto", padding: "0 16px", display: "flex", alignItems: "center", justifyContent: "space-between", height: "64px" }}>
         {/* Logo */}
         {logoType === "image" && logoImageSrc ? (
           <img src={logoImageSrc} alt={logoText} style={{ height: "36px", objectFit: "contain" }} />

@@ -6,6 +6,10 @@ import ImageBlock from "./ImageBlock";
 import ContainerBlock from "./ContainerBlock";
 import TwoColumnBlock from "./TwoColumnBlock";
 import ThreeColumnBlock from "./ThreeColumnBlock";
+import FourColumnBlock from "./FourColumnBlock";
+import AsymmetricColumnBlock from "./AsymmetricColumnBlock";
+import VerticalStackBlock from "./VerticalStackBlock";
+import MasonryGridBlock from "./MasonryGridBlock";
 import GalleryBlock from "./GalleryBlock";
 import ContactFormBlock from "./ContactFormBlock";
 import FooterBlock from "./FooterBlock";
@@ -18,6 +22,10 @@ import TestimonialBlock from "./TestimonialBlock";
 import PricingTableBlock from "./PricingTableBlock";
 import IconBlock from "./IconBlock";
 import MapBlock from "./MapBlock";
+import ProductCardBlock from "./ProductCardBlock";
+import ProductGridBlock from "./ProductGridBlock";
+import ProductDetailBlock from "./ProductDetailBlock";
+import CartButtonBlock from "./CartButtonBlock";
 
 interface Props {
   block: Block;
@@ -43,6 +51,14 @@ export default function BlockRenderer({ block, onPropChange, isEditing }: Props)
       return <TwoColumnBlock block={block} onChange={change} isEditing={!!isEditing} />;
     case "three-column":
       return <ThreeColumnBlock block={block} onChange={change} isEditing={!!isEditing} />;
+    case "four-column":
+      return <FourColumnBlock block={block} onChange={change} isEditing={!!isEditing} />;
+    case "asymmetric-column":
+      return <AsymmetricColumnBlock block={block} onChange={change} isEditing={!!isEditing} />;
+    case "vertical-stack":
+      return <VerticalStackBlock block={block} onChange={change} isEditing={!!isEditing} />;
+    case "masonry-grid":
+      return <MasonryGridBlock block={block} onChange={change} isEditing={!!isEditing} />;
     case "gallery":
       return <GalleryBlock block={block} onChange={change} isEditing={!!isEditing} />;
     case "contact-form":
@@ -67,6 +83,14 @@ export default function BlockRenderer({ block, onPropChange, isEditing }: Props)
       return <IconBlock block={block} isEditing={!!isEditing} />;
     case "map":
       return <MapBlock block={block} isEditing={!!isEditing} />;
+    case "product-card":
+      return <ProductCardBlock block={block} onChange={change} isEditing={!!isEditing} />;
+    case "product-grid":
+      return <ProductGridBlock block={block} onChange={change} isEditing={!!isEditing} />;
+    case "product-detail":
+      return <ProductDetailBlock block={block} onChange={change} isEditing={!!isEditing} />;
+    case "cart-button":
+      return <CartButtonBlock block={block} onChange={change} isEditing={!!isEditing} />;
     default:
       return null;
   }
