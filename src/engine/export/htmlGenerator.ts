@@ -110,7 +110,7 @@ ${body}
 
 function generateSectionHTML(section: Section, project: Project, _isFirst?: boolean): string {
   const style = [
-    section.backgroundColor ? `background-color:${section.backgroundColor}` : "",
+    section.backgroundGradient ? `background:${section.backgroundGradient}` : section.backgroundColor ? `background-color:${section.backgroundColor}` : "",
     `padding:${section.paddingTop}px ${section.paddingRight}px ${section.paddingBottom}px ${section.paddingLeft}px`,
   ].filter(Boolean).join(";");
 
@@ -126,10 +126,17 @@ function generateSectionHTML(section: Section, project: Project, _isFirst?: bool
 }
 
 function generateBlockHTML(block: Block): string {
-  const html = generateBlockInnerHTML(block);
+  let html = generateBlockInnerHTML(block);
   // Wrap with cornerRadius if set
   if (block.cornerRadius !== undefined && block.cornerRadius > 0) {
-    return `<div style="border-radius:${block.cornerRadius}px;overflow:hidden">${html}</div>`;
+    html = `<div style="border-radius:${block.cornerRadius}px;overflow:hidden">${html}</div>`;
+  }
+  const anim = block.animation && block.animation !== "none" ? block.animation : null;
+  const css = block.customCss?.trim();
+  if (anim || css) {
+    const styleTag = css ? `<style>#b-${block.id}{${css}}</style>` : "";
+    const animAttr = anim ? ` data-anim="${anim}"` : "";
+    html = `${styleTag}<div id="b-${block.id}"${animAttr}>${html}</div>`;
   }
   return html;
 }
@@ -516,6 +523,84 @@ function generateBlockInnerHTML(block: Block): string {
       const posStyle = position === "inline" ? "display:inline-flex" : `position:fixed;${position === "fixed-bottom-left" ? "left:24px" : "right:24px"};bottom:24px;z-index:1000`;
       const btnStyle = `background:${bgColor ?? "#2563eb"};color:${iconColor ?? "#fff"};border:none;border-radius:50px;padding:12px 20px;display:flex;align-items:center;gap:8px;font-weight:700;font-size:0.95rem;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,0.18)`;
       return `<div style="${posStyle}"><button id="stackpage-cart-btn" onclick="toggleStackpageCart()" style="${btnStyle}"><span style="font-size:1.2rem">🛒</span>${label ? `<span>${escHtml(label)}</span>` : ""}<span id="stackpage-cart-count" style="background:#ef4444;color:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:800">0</span></button></div>`;
+    }
+
+    case "faq": {
+      const { headingText, items, accentColor, backgroundColor: faqBg, textColor: faqText, paddingTop: faqPt, paddingBottom: faqPb } = block.props;
+      const wrapStyle = `background:${faqBg};color:${faqText};padding:${faqPt}px 16px ${faqPb}px`;
+      const headingHtml = headingText ? `<h2 style="text-align:center;margin-bottom:32px;font-weight:700">${escHtml(headingText)}</h2>` : "";
+      const itemsHtml = items.map((item, i) => {
+        const btnId = `faq-btn-${block.id}-${i}`;
+        const panelId = `faq-panel-${block.id}-${i}`;
+        return `<div style="border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;margin-bottom:8px"><button id="${btnId}" aria-expanded="false" aria-controls="${panelId}" onclick="var p=document.getElementById('${panelId}');var open=p.style.display!=='none';p.style.display=open?'none':'block';this.querySelector('.faq-icon').textContent=open?'+':'×';this.style.color=open?'${faqText}':'${accentColor}'" style="width:100%;display:flex;justify-content:space-between;align-items:center;padding:16px 20px;background:transparent;border:none;cursor:pointer;font-weight:600;font-size:0.95rem;color:${faqText};text-align:left">${escHtml(item.question)}<span class="faq-icon" style="flex-shrink:0;margin-left:12px;font-size:1.2rem">+</span></button><div id="${panelId}" style="display:none;padding:0 20px 16px;opacity:0.8;line-height:1.7">${escHtml(item.answer)}</div></div>`;
+      }).join("");
+      return `<div style="${wrapStyle}"><div style="max-width:720px;margin:0 auto">${headingHtml}${itemsHtml}</div></div>`;
+    }
+
+    case "embed": {
+      const { url: embedUrl, height: embedH, title: embedTitle, allowFullscreen } = block.props;
+      if (!embedUrl) return "";
+      return `<div style="width:100%"><iframe src="${escAttr(embedUrl)}" title="${escAttr(embedTitle)}" height="${embedH}" ${allowFullscreen ? 'allowfullscreen' : ""} style="width:100%;border:none;border-radius:8px;display:block"></iframe></div>`;
+    }
+
+    case "social-share": {
+      const { url: shareUrl, title: shareTitle, platforms, align: shareAlign, buttonStyle, iconColor: shareIconColor, backgroundColor: shareBg } = block.props;
+      const alignMap: Record<string, string> = { left: "flex-start", center: "center", right: "flex-end" };
+      const PLATFORM_HREFS: Record<string, (u: string, t: string) => string> = {
+        twitter: (u, t) => `https://twitter.com/intent/tweet?url=${encodeURIComponent(u)}&text=${encodeURIComponent(t)}`,
+        facebook: (u) => `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(u)}`,
+        linkedin: (u, t) => `https://www.linkedin.com/shareArticle?mini=true&url=${encodeURIComponent(u)}&title=${encodeURIComponent(t)}`,
+        whatsapp: (u, t) => `https://wa.me/?text=${encodeURIComponent(t + " " + u)}`,
+      };
+      const PLATFORM_LABELS: Record<string, string> = { twitter: "X / Twitter", facebook: "Facebook", linkedin: "LinkedIn", whatsapp: "WhatsApp" };
+      const PLATFORM_ICONS: Record<string, string> = { twitter: "𝕏", facebook: "f", linkedin: "in", whatsapp: "📱" };
+      const u = shareUrl || "PAGE_URL";
+      const t = shareTitle || "PAGE_TITLE";
+      const buttonsHtml = platforms.map((p) => {
+        const href = PLATFORM_HREFS[p]?.(u, t) ?? "#";
+        const iconPart = PLATFORM_ICONS[p] ?? p;
+        const textPart = PLATFORM_LABELS[p] ?? p;
+        const inner = buttonStyle === "icon" ? iconPart : buttonStyle === "label" ? textPart : `${iconPart} ${textPart}`;
+        const pad = buttonStyle === "icon" ? "8px" : "8px 16px";
+        return `<a href="${escAttr(href)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;background:${shareBg};color:${shareIconColor};padding:${pad};border-radius:8px;text-decoration:none;font-weight:600;font-size:0.9rem">${escHtml(inner)}</a>`;
+      }).join("");
+      return `<div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:${alignMap[shareAlign]};padding:12px 0">${buttonsHtml}</div>`;
+    }
+
+    case "cookie-banner": {
+      const { message: cookieMsg, acceptLabel, declineLabel, backgroundColor: cookieBg, textColor: cookieText, buttonColor, storageKey } = block.props;
+      const bannerId = `cookie-banner-${block.id}`;
+      const btnAcceptStyle = `background:${buttonColor};border:none;color:#fff;padding:8px 16px;border-radius:6px;cursor:pointer;font-weight:600;font-size:0.875rem`;
+      const btnDeclineStyle = `background:transparent;border:1px solid ${cookieText};color:${cookieText};padding:8px 16px;border-radius:6px;cursor:pointer;font-size:0.875rem`;
+      const bannerStyle = `background:${cookieBg};color:${cookieText};padding:16px 24px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;box-shadow:0 -2px 12px rgba(0,0,0,0.1);font-size:0.875rem;position:fixed;bottom:0;left:0;right:0;z-index:9999`;
+      return `<div id="${bannerId}" style="${bannerStyle}"><span>🍪 ${escHtml(cookieMsg)}</span><div style="display:flex;gap:8px;flex-shrink:0"><button onclick="localStorage.setItem('${escAttr(storageKey)}','declined');document.getElementById('${bannerId}').remove()" style="${btnDeclineStyle}">${escHtml(declineLabel)}</button><button onclick="localStorage.setItem('${escAttr(storageKey)}','accepted');document.getElementById('${bannerId}').remove()" style="${btnAcceptStyle}">${escHtml(acceptLabel)}</button></div></div><script>if(localStorage.getItem('${escAttr(storageKey)}'))document.getElementById('${bannerId}').remove();<\/script>`;
+    }
+
+    case "countdown": {
+      const { targetDate: cdTarget, heading: cdHeading, expiredText, accentColor: cdAccent, textColor: cdText, backgroundColor: cdBg, showDays, showHours, showMinutes, showSeconds, align: cdAlign, paddingTop: cdPt, paddingBottom: cdPb } = block.props;
+      const countdownId = `countdown-${block.id}`;
+      const alignMap2: Record<string, string> = { left: "flex-start", center: "center", right: "flex-end" };
+      const headingHtml2 = cdHeading ? `<h3 style="margin:0 0 16px;font-weight:700;color:${cdText};text-align:${cdAlign}">${escHtml(cdHeading)}</h3>` : "";
+      const unitIds = [showDays && "d", showHours && "h", showMinutes && "m", showSeconds && "s"].filter(Boolean) as string[];
+      const unitLabels: Record<string, string> = { d: "Days", h: "Hours", m: "Minutes", s: "Seconds" };
+      const unitsHtml = unitIds.map((u) => `<div style="text-align:center;min-width:80px"><div id="${countdownId}-${u}" style="font-size:2.5rem;font-weight:800;color:${cdAccent};line-height:1;font-variant-numeric:tabular-nums">00</div><div style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.05em;color:${cdText};opacity:0.6;margin-top:4px">${unitLabels[u]}</div></div>`).join("");
+      const expiredId = `${countdownId}-expired`;
+      return `<div style="background:${cdBg};color:${cdText};padding:${cdPt}px 16px ${cdPb}px;"><div style="display:flex;flex-direction:column;align-items:${alignMap2[cdAlign]};gap:16px">${headingHtml2}<div id="${countdownId}" style="display:flex;gap:16px;flex-wrap:wrap;justify-content:${alignMap2[cdAlign]}">${unitsHtml}</div><p id="${expiredId}" style="display:none;color:${cdText};opacity:0.7;text-align:${cdAlign}">${escHtml(expiredText)}</p></div></div><script>(function(){var target=new Date("${escAttr(cdTarget)}").getTime();var el=document.getElementById("${countdownId}");if(!el)return;function update(){var now=Date.now();var diff=target-now;if(diff<=0){el.style.display="none";var exp=document.getElementById("${expiredId}");if(exp)exp.style.display="block";return;}${showDays ? `var dEl=document.getElementById("${countdownId}-d");if(dEl)dEl.textContent=String(Math.floor(diff/86400000)).padStart(2,"0");` : ""}${showHours ? `var hEl=document.getElementById("${countdownId}-h");if(hEl)hEl.textContent=String(Math.floor((diff%86400000)/3600000)).padStart(2,"0");` : ""}${showMinutes ? `var mEl=document.getElementById("${countdownId}-m");if(mEl)mEl.textContent=String(Math.floor((diff%3600000)/60000)).padStart(2,"0");` : ""}${showSeconds ? `var sEl=document.getElementById("${countdownId}-s");if(sEl)sEl.textContent=String(Math.floor((diff%60000)/1000)).padStart(2,"0");` : ""}setTimeout(update,1000);}update();})();<\/script>`;
+    }
+
+    case "timeline": {
+      const { items: tlItems, accentColor: tlAccent, dateColor: tlDate, textColor: tlText, lineColor: tlLine, align: tlAlign, paddingTop: tlPt, paddingBottom: tlPb } = block.props;
+      const isCentered = tlAlign === "center";
+      const cardsHtml = tlItems.map((item, idx) => {
+        const isLeft = isCentered && idx % 2 === 0;
+        const posStyle = isCentered
+          ? `max-width:45%;${isLeft ? "margin-right:56%" : "margin-left:56%"}`
+          : `padding-left:52px`;
+        const dotLeft = isCentered ? "calc(50% - 8px)" : "12px";
+        return `<div style="position:relative;margin-bottom:32px"><div style="position:absolute;left:${dotLeft};top:6px;width:16px;height:16px;border-radius:50%;background:${tlAccent};border:3px solid white;box-shadow:0 0 0 2px ${tlAccent};z-index:1"></div><div style="${posStyle};background:#f8fafc;border:1px solid ${tlLine};border-radius:8px;padding:16px 20px">${item.date ? `<div style="font-size:0.8rem;font-weight:700;color:${tlDate};margin-bottom:4px">${item.icon ? `<span style="margin-right:6px">${escHtml(item.icon)}</span>` : ""}${escHtml(item.date)}</div>` : ""}<div style="font-weight:700;color:${tlText};margin-bottom:6px">${escHtml(item.title)}</div><div style="font-size:0.9rem;color:${tlText};opacity:0.75;line-height:1.6">${escHtml(item.content)}</div></div></div>`;
+      }).join("");
+      const lineLeft = isCentered ? "50%" : "20px";
+      return `<div style="color:${tlText};padding:${tlPt}px 16px ${tlPb}px"><div style="max-width:760px;margin:0 auto;position:relative"><div style="position:absolute;left:${lineLeft};top:0;bottom:0;width:2px;background:${tlLine};transform:${isCentered ? "translateX(-50%)" : "none"}"></div>${cardsHtml}</div></div>`;
     }
 
     default:

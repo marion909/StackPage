@@ -1349,6 +1349,229 @@ export default function PropertiesPanel({ block, pageId, sectionId }: Props) {
           </Field>
         </>
       )}
+
+      {block.type === "faq" && (
+        <>
+          <Field label="Heading">
+            <TextInput value={block.props.headingText ?? ""} onChange={(v) => update({ headingText: v || undefined })} />
+          </Field>
+          <Field label="Accent Color">
+            <ColorInput value={block.props.accentColor} onChange={(v) => update({ accentColor: v })} />
+          </Field>
+          <Field label="Background Color">
+            <ColorInput value={block.props.backgroundColor} onChange={(v) => update({ backgroundColor: v })} />
+          </Field>
+          <Field label="Text Color">
+            <ColorInput value={block.props.textColor} onChange={(v) => update({ textColor: v })} />
+          </Field>
+          <Field label="Padding Top (px)">
+            <NumberInput value={block.props.paddingTop} onChange={(v) => update({ paddingTop: v })} min={0} max={300} />
+          </Field>
+          <Field label="Padding Bottom (px)">
+            <NumberInput value={block.props.paddingBottom} onChange={(v) => update({ paddingBottom: v })} min={0} max={300} />
+          </Field>
+          <Field label="FAQ Items">
+            <div className="flex flex-col gap-2">
+              {block.props.items.map((item, idx) => (
+                <div key={item.id} className="border border-[#e2e8f0] rounded p-2 flex flex-col gap-1">
+                  <input type="text" value={item.question} onChange={(e) => { const items = [...block.props.items]; items[idx] = { ...items[idx], question: e.target.value }; update({ items }); }} placeholder="Question" className="text-xs border border-[#d1d5db] rounded px-2 py-1 w-full" />
+                  <textarea value={item.answer} onChange={(e) => { const items = [...block.props.items]; items[idx] = { ...items[idx], answer: e.target.value }; update({ items }); }} placeholder="Answer" rows={2} className="text-xs border border-[#d1d5db] rounded px-2 py-1 w-full resize-none" />
+                  <button onClick={() => update({ items: block.props.items.filter((_, i) => i !== idx) })} className="text-[10px] text-red-400 hover:text-red-600 self-end">Remove</button>
+                </div>
+              ))}
+              <button onClick={() => { const { nanoid: n } = require("nanoid"); update({ items: [...block.props.items, { id: Math.random().toString(36).slice(2), question: "New Question", answer: "Answer here", open: false }] }); }} className="text-xs text-[#2563eb] hover:text-[#1d4ed8] border border-dashed border-[#bfdbfe] rounded py-1">+ Add Item</button>
+            </div>
+          </Field>
+        </>
+      )}
+
+      {block.type === "embed" && (
+        <>
+          <Field label="Embed URL">
+            <TextInput value={block.props.url} onChange={(v) => update({ url: v })} />
+          </Field>
+          <Field label="Height (px)">
+            <NumberInput value={block.props.height} onChange={(v) => update({ height: v })} min={100} max={2000} />
+          </Field>
+          <Field label="Title (accessibility)">
+            <TextInput value={block.props.title} onChange={(v) => update({ title: v })} />
+          </Field>
+          <Field label="Align">
+            <Select value={block.props.align} onChange={(v) => update({ align: v })} options={ALIGN_OPTIONS} />
+          </Field>
+        </>
+      )}
+
+      {block.type === "social-share" && (
+        <>
+          <Field label="Share URL (blank = current page)">
+            <TextInput value={block.props.url ?? ""} onChange={(v) => update({ url: v || undefined })} />
+          </Field>
+          <Field label="Share Title">
+            <TextInput value={block.props.title ?? ""} onChange={(v) => update({ title: v || undefined })} />
+          </Field>
+          <Field label="Button Style">
+            <Select value={block.props.buttonStyle} onChange={(v) => update({ buttonStyle: v })} options={[{ label: "Icon + Label", value: "both" }, { label: "Icon only", value: "icon" }, { label: "Label only", value: "label" }]} />
+          </Field>
+          <Field label="Align">
+            <Select value={block.props.align} onChange={(v) => update({ align: v })} options={ALIGN_OPTIONS} />
+          </Field>
+          <Field label="Button Color">
+            <ColorInput value={block.props.backgroundColor} onChange={(v) => update({ backgroundColor: v })} />
+          </Field>
+          <Field label="Icon/Text Color">
+            <ColorInput value={block.props.iconColor} onChange={(v) => update({ iconColor: v })} />
+          </Field>
+        </>
+      )}
+
+      {block.type === "cookie-banner" && (
+        <>
+          <Field label="Message">
+            <TextInput value={block.props.message} onChange={(v) => update({ message: v })} />
+          </Field>
+          <Field label="Accept Label">
+            <TextInput value={block.props.acceptLabel} onChange={(v) => update({ acceptLabel: v })} />
+          </Field>
+          <Field label="Decline Label">
+            <TextInput value={block.props.declineLabel} onChange={(v) => update({ declineLabel: v })} />
+          </Field>
+          <Field label="Background Color">
+            <ColorInput value={block.props.backgroundColor} onChange={(v) => update({ backgroundColor: v })} />
+          </Field>
+          <Field label="Text Color">
+            <ColorInput value={block.props.textColor} onChange={(v) => update({ textColor: v })} />
+          </Field>
+          <Field label="Button Color">
+            <ColorInput value={block.props.buttonColor} onChange={(v) => update({ buttonColor: v })} />
+          </Field>
+          <Field label="Storage Key">
+            <TextInput value={block.props.storageKey} onChange={(v) => update({ storageKey: v })} />
+          </Field>
+        </>
+      )}
+
+      {block.type === "countdown" && (
+        <>
+          <Field label="Target Date">
+            <input type="date" value={block.props.targetDate} onChange={(e) => update({ targetDate: e.target.value })} className="w-full border border-[#d1d5db] rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-[#2563eb]" />
+          </Field>
+          <Field label="Heading">
+            <TextInput value={block.props.heading ?? ""} onChange={(v) => update({ heading: v || undefined })} />
+          </Field>
+          <Field label="Expired Text">
+            <TextInput value={block.props.expiredText} onChange={(v) => update({ expiredText: v })} />
+          </Field>
+          <Field label="Accent Color">
+            <ColorInput value={block.props.accentColor} onChange={(v) => update({ accentColor: v })} />
+          </Field>
+          <Field label="Background Color">
+            <ColorInput value={block.props.backgroundColor} onChange={(v) => update({ backgroundColor: v })} />
+          </Field>
+          <Field label="Text Color">
+            <ColorInput value={block.props.textColor} onChange={(v) => update({ textColor: v })} />
+          </Field>
+          <Field label="Align">
+            <Select value={block.props.align} onChange={(v) => update({ align: v })} options={ALIGN_OPTIONS} />
+          </Field>
+          <Field label="Show Days">
+            <Select value={String(block.props.showDays)} onChange={(v) => update({ showDays: v === "true" })} options={[{ label: "Yes", value: "true" }, { label: "No", value: "false" }]} />
+          </Field>
+          <Field label="Show Hours">
+            <Select value={String(block.props.showHours)} onChange={(v) => update({ showHours: v === "true" })} options={[{ label: "Yes", value: "true" }, { label: "No", value: "false" }]} />
+          </Field>
+          <Field label="Show Minutes">
+            <Select value={String(block.props.showMinutes)} onChange={(v) => update({ showMinutes: v === "true" })} options={[{ label: "Yes", value: "true" }, { label: "No", value: "false" }]} />
+          </Field>
+          <Field label="Show Seconds">
+            <Select value={String(block.props.showSeconds)} onChange={(v) => update({ showSeconds: v === "true" })} options={[{ label: "Yes", value: "true" }, { label: "No", value: "false" }]} />
+          </Field>
+          <Field label="Padding Top (px)">
+            <NumberInput value={block.props.paddingTop} onChange={(v) => update({ paddingTop: v })} min={0} max={300} />
+          </Field>
+          <Field label="Padding Bottom (px)">
+            <NumberInput value={block.props.paddingBottom} onChange={(v) => update({ paddingBottom: v })} min={0} max={300} />
+          </Field>
+        </>
+      )}
+
+      {block.type === "timeline" && (
+        <>
+          <Field label="Layout">
+            <Select value={block.props.align} onChange={(v) => update({ align: v })} options={[{ label: "Left (linear)", value: "left" }, { label: "Center (zigzag)", value: "center" }]} />
+          </Field>
+          <Field label="Accent Color">
+            <ColorInput value={block.props.accentColor} onChange={(v) => update({ accentColor: v })} />
+          </Field>
+          <Field label="Date Color">
+            <ColorInput value={block.props.dateColor} onChange={(v) => update({ dateColor: v })} />
+          </Field>
+          <Field label="Text Color">
+            <ColorInput value={block.props.textColor} onChange={(v) => update({ textColor: v })} />
+          </Field>
+          <Field label="Line Color">
+            <ColorInput value={block.props.lineColor} onChange={(v) => update({ lineColor: v })} />
+          </Field>
+          <Field label="Padding Top (px)">
+            <NumberInput value={block.props.paddingTop} onChange={(v) => update({ paddingTop: v })} min={0} max={300} />
+          </Field>
+          <Field label="Padding Bottom (px)">
+            <NumberInput value={block.props.paddingBottom} onChange={(v) => update({ paddingBottom: v })} min={0} max={300} />
+          </Field>
+          <Field label="Timeline Items">
+            <div className="flex flex-col gap-2">
+              {block.props.items.map((item, idx) => (
+                <div key={item.id} className="border border-[#e2e8f0] rounded p-2 flex flex-col gap-1">
+                  <div className="flex gap-1">
+                    <input type="text" value={item.icon ?? ""} onChange={(e) => { const items = [...block.props.items]; items[idx] = { ...items[idx], icon: e.target.value || undefined }; update({ items }); }} placeholder="Icon (emoji)" className="text-xs border border-[#d1d5db] rounded px-2 py-1 w-12 text-center" />
+                    <input type="text" value={item.date} onChange={(e) => { const items = [...block.props.items]; items[idx] = { ...items[idx], date: e.target.value }; update({ items }); }} placeholder="Date" className="text-xs border border-[#d1d5db] rounded px-2 py-1 flex-1" />
+                  </div>
+                  <input type="text" value={item.title} onChange={(e) => { const items = [...block.props.items]; items[idx] = { ...items[idx], title: e.target.value }; update({ items }); }} placeholder="Title" className="text-xs border border-[#d1d5db] rounded px-2 py-1 w-full" />
+                  <textarea value={item.content} onChange={(e) => { const items = [...block.props.items]; items[idx] = { ...items[idx], content: e.target.value }; update({ items }); }} placeholder="Content" rows={2} className="text-xs border border-[#d1d5db] rounded px-2 py-1 w-full resize-none" />
+                  <button onClick={() => update({ items: block.props.items.filter((_, i) => i !== idx) })} className="text-[10px] text-red-400 hover:text-red-600 self-end">Remove</button>
+                </div>
+              ))}
+              <button onClick={() => update({ items: [...block.props.items, { id: Math.random().toString(36).slice(2), date: "2024", title: "New Event", content: "Event description", icon: "📌" }] })} className="text-xs text-[#2563eb] hover:text-[#1d4ed8] border border-dashed border-[#bfdbfe] rounded py-1">+ Add Item</button>
+            </div>
+          </Field>
+        </>
+      )}
+
+      {/* ── Universal: Animation / Notes / Custom CSS ── */}
+      <div className="border-t border-[#f1f5f9] mt-3 pt-3">
+        <Field label="Scroll Animation">
+          <Select
+            value={block.animation ?? "none"}
+            onChange={(v) => patchBlock(pageId, sectionId, block.id, { animation: v as typeof block.animation })}
+            options={[
+              { label: "None", value: "none" },
+              { label: "Fade In", value: "fade-in" },
+              { label: "Slide Up", value: "slide-up" },
+              { label: "Slide Left", value: "slide-left" },
+              { label: "Slide Right", value: "slide-right" },
+              { label: "Zoom In", value: "zoom-in" },
+            ]}
+          />
+        </Field>
+        <Field label="Custom CSS">
+          <textarea
+            value={block.customCss ?? ""}
+            onChange={(e) => patchBlock(pageId, sectionId, block.id, { customCss: e.target.value || undefined })}
+            placeholder={"color: red;\nfont-size: 18px;"}
+            rows={4}
+            className="w-full border border-[#d1d5db] rounded px-2 py-1 text-xs font-mono focus:outline-none focus:ring-1 focus:ring-[#2563eb] resize-y"
+          />
+        </Field>
+        <Field label="Notes (editor only)">
+          <textarea
+            value={block.notes ?? ""}
+            onChange={(e) => patchBlock(pageId, sectionId, block.id, { notes: e.target.value || undefined })}
+            placeholder="Internal notes about this block…"
+            rows={3}
+            className="w-full border border-[#d1d5db] rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-[#2563eb] resize-y"
+          />
+        </Field>
+      </div>
     </div>
   );
 

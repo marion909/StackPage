@@ -1,6 +1,6 @@
 [package]
 name = "stackpage"
-version = "1.0.1"
+version = "1.0.6"
 description = "StackPage – Visual Website Builder"
 authors = ["StackPage"]
 edition = "2021"

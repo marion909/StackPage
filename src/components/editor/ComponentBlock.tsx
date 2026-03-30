@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+﻿import { useState, useEffect, useRef } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useProjectStore } from "../../stores/useProjectStore";
@@ -16,6 +16,19 @@ interface Props {
 
 export default function ComponentBlock({ block, pageId, sectionId }: Props) {
   const [hover, setHover] = useState(false);
+  const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number } | null>(null);
+  const ctxRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!ctxMenu) return;
+    function close(e: MouseEvent) {
+      if (ctxRef.current && !ctxRef.current.contains(e.target as Node)) {
+        setCtxMenu(null);
+      }
+    }
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, [ctxMenu]);
   const deleteBlock = useProjectStore((s) => s.deleteBlock);
   const duplicateBlock = useProjectStore((s) => s.duplicateBlock);
   const updateBlock = useProjectStore((s) => s.updateBlock);
@@ -24,6 +37,7 @@ export default function ComponentBlock({ block, pageId, sectionId }: Props) {
   const selectBlock = useEditorStore((s) => s.selectBlock);
   const toggleBlockSelection = useEditorStore((s) => s.toggleBlockSelection);
   const savePreset = usePresetsStore((s) => s.savePreset);
+  const copyBlock = useEditorStore((s) => s.copyBlock);
 
   const isSelected = selectedBlockIds.includes(block.id);
   const isPrimary = selectedBlockId === block.id;
@@ -63,6 +77,12 @@ export default function ComponentBlock({ block, pageId, sectionId }: Props) {
       }`}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        selectBlock(block.id, sectionId);
+        setCtxMenu({ x: e.clientX, y: e.clientY });
+      }}
       onClick={(e) => {
         e.stopPropagation();
         if (e.shiftKey) {
@@ -83,9 +103,12 @@ export default function ComponentBlock({ block, pageId, sectionId }: Props) {
             className="opacity-70 hover:opacity-100 cursor-grab px-0.5"
             title="Drag to reorder"
           >
-            â ¿
+            ⠿
           </button>
           <span className="opacity-70 capitalize">{block.type}</span>
+          {block.notes && (
+            <span className="opacity-80" title={block.notes}>📝</span>
+          )}
           {selectedBlockIds.length > 1 && isPrimary && (
             <span className="opacity-70 ml-0.5">[{selectedBlockIds.length}]</span>
           )}
@@ -124,6 +147,50 @@ export default function ComponentBlock({ block, pageId, sectionId }: Props) {
       )}
 
       <BlockRenderer block={block} onPropChange={handlePropChange} isEditing />
+
+      {/* Right-click context menu */}
+      {ctxMenu && (
+        <div
+          ref={ctxRef}
+          style={{ position: "fixed", top: ctxMenu.y, left: ctxMenu.x, zIndex: 9999 }}
+          className="bg-white border border-[#e2e8f0] rounded-lg shadow-xl py-1 min-w-[160px] text-sm text-[#1e293b]"
+          onMouseDown={(e) => e.stopPropagation()}
+        >
+          {[
+            {
+              label: "Copy", icon: "⧉", action: () => { copyBlock(block); setCtxMenu(null); }
+            },
+            {
+              label: "Duplicate", icon: "⊕", action: () => { duplicateBlock(pageId, sectionId, block.id); setCtxMenu(null); }
+            },
+            {
+              label: "Save as Preset", icon: "☆", action: () => {
+                const name = window.prompt("Preset name:", block.type);
+                if (name) savePreset(name.trim() || block.type, block);
+                setCtxMenu(null);
+              }
+            },
+            { separator: true },
+            {
+              label: "Delete", icon: "×", danger: true,
+              action: () => { deleteBlock(pageId, sectionId, block.id); setCtxMenu(null); }
+            },
+          ].map((item, i) =>
+            "separator" in item && item.separator ? (
+              <hr key={i} className="my-1 border-[#e2e8f0]" />
+            ) : (
+              <button
+                key={i}
+                onClick={(e) => { e.stopPropagation(); ("action" in item) && item.action?.(); }}
+                className={`w-full text-left px-3 py-1.5 flex items-center gap-2 hover:bg-[#f1f5f9] transition-colors ${"danger" in item && item.danger ? "text-red-500" : ""}`}
+              >
+                <span className="opacity-70">{"icon" in item ? item.icon : ""}</span>
+                {"label" in item ? item.label : ""}
+              </button>
+            )
+          )}
+        </div>
+      )}
     </div>
   );
 }

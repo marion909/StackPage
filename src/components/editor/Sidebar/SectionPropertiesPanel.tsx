@@ -91,6 +91,22 @@ export default function SectionPropertiesPanel({ section, pageId }: Props) {
         <ColorInput value={section.backgroundColor ?? ""} onChange={(v) => update({ backgroundColor: v || undefined })} placeholder="Inherit" />
       </Field>
 
+      <Field label="Background Gradient">
+        <input
+          type="text"
+          value={section.backgroundGradient ?? ""}
+          onChange={(e) => update({ backgroundGradient: e.target.value || undefined })}
+          placeholder="linear-gradient(135deg, #1e293b, #2563eb)"
+          className="w-full border border-[#d1d5db] rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-[#2563eb]"
+        />
+        <div className="flex gap-1 mt-1 flex-wrap">
+          {["linear-gradient(135deg,#667eea,#764ba2)","linear-gradient(135deg,#f093fb,#f5576c)","linear-gradient(135deg,#4facfe,#00f2fe)","linear-gradient(135deg,#43e97b,#38f9d7)","linear-gradient(135deg,#fa709a,#fee140)"].map((g) => (
+            <button key={g} onClick={() => update({ backgroundGradient: g })} style={{ background: g }} className="w-7 h-5 rounded border border-white/30 hover:scale-110 transition-transform" title={g} />
+          ))}
+          {section.backgroundGradient && <button onClick={() => update({ backgroundGradient: undefined })} className="text-[10px] text-[#94a3b8] hover:text-[#374151] px-1">Clear</button>}
+        </div>
+      </Field>
+
       <Field label="Background Image URL">
         <input
           type="text"

@@ -1,8 +1,11 @@
 ﻿import { useState } from "react";
+import JSZip from "jszip";
 import { useProjectStore } from "../../stores/useProjectStore";
 import { useEditorStore } from "../../stores/useEditorStore";
 import { exportProject } from "../../engine/export/htmlGenerator";
 import { cmd_writeExportFiles, cmd_copyAsset, pickDirectory, openInBrowser } from "../../lib/tauri";
+import { save as saveDialog } from "@tauri-apps/plugin-dialog";
+import { writeFile } from "@tauri-apps/plugin-fs";
 import type { Project } from "../../types/project";
 
 function isLocalPath(src: string): boolean {
@@ -89,6 +92,31 @@ export default function ExportDialog() {
       setFileCount(exportFiles.length);
       setLastOutputPath(outputPath.trim());
       setStep("done");
+    } catch (e: unknown) {
+      setError(String(e));
+      setStep("error");
+    }
+  }
+
+  async function handleDownloadZip() {
+    const savePath = await saveDialog({
+      defaultPath: `${project.name.replace(/[^a-z0-9]/gi, "_")}.zip`,
+      filters: [{ name: "ZIP Archive", extensions: ["zip"] }],
+    });
+    if (!savePath) return;
+    setStep("exporting");
+    setError("");
+    try {
+      const exportFiles = exportProject({ ...project, siteUrl: siteUrl.trim() || undefined, exportSettings: { ...project.exportSettings, minify } });
+      const zip = new JSZip();
+      for (const f of exportFiles) {
+        zip.file(f.relativePath, f.content);
+      }
+      const bytes = await zip.generateAsync({ type: "uint8array" });
+      await writeFile(savePath, bytes);
+      setStep("done");
+      setFileCount(exportFiles.length);
+      setLastOutputPath(savePath);
     } catch (e: unknown) {
       setError(String(e));
       setStep("error");
@@ -208,6 +236,14 @@ export default function ExportDialog() {
                 className="flex-1 border border-[#d1d5db] text-[#374151] py-2.5 rounded-lg text-sm font-medium hover:bg-[#f9fafb] transition-colors"
               >
                 Cancel
+              </button>
+              <button
+                onClick={handleDownloadZip}
+                disabled={step === "exporting"}
+                className="flex-1 border border-[#2563eb] text-[#2563eb] py-2.5 rounded-lg text-sm font-medium hover:bg-[#eff6ff] disabled:opacity-60 transition-colors"
+                title="Download as ZIP archive"
+              >
+                ⬇ ZIP
               </button>
               <button
                 onClick={handleExport}

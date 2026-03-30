@@ -18,6 +18,7 @@ export default function Canvas() {
   const addSection = useProjectStore((s) => s.addSection);
   const activePageId = useEditorStore((s) => s.activePageId);
   const previewMode = useEditorStore((s) => s.previewMode);
+  const canvasZoom = useEditorStore((s) => s.canvasZoom);
 
   const activePage = project?.pages.find((p) => p.id === activePageId);
   const sections = activePage?.sections ?? [];
@@ -49,7 +50,7 @@ export default function Canvas() {
       <div
         data-canvas-root
         className="bg-white shadow-sm min-h-full transition-all duration-300"
-        style={{ width: PREVIEW_WIDTHS[previewMode], maxWidth: "100%" }}
+        style={{ width: PREVIEW_WIDTHS[previewMode], maxWidth: "100%", transform: `scale(${canvasZoom})`, transformOrigin: "top center" }}
       >
         {sections.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 text-center gap-3">

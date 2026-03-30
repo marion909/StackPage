@@ -26,6 +26,12 @@ import ProductCardBlock from "./ProductCardBlock";
 import ProductGridBlock from "./ProductGridBlock";
 import ProductDetailBlock from "./ProductDetailBlock";
 import CartButtonBlock from "./CartButtonBlock";
+import FaqBlock from "./FaqBlock";
+import EmbedBlock from "./EmbedBlock";
+import SocialShareBlock from "./SocialShareBlock";
+import CookieBannerBlock from "./CookieBannerBlock";
+import CountdownBlock from "./CountdownBlock";
+import TimelineBlock from "./TimelineBlock";
 
 interface Props {
   block: Block;
@@ -91,6 +97,18 @@ export default function BlockRenderer({ block, onPropChange, isEditing }: Props)
       return <ProductDetailBlock block={block} onChange={change} isEditing={!!isEditing} />;
     case "cart-button":
       return <CartButtonBlock block={block} onChange={change} isEditing={!!isEditing} />;
+    case "faq":
+      return <FaqBlock block={block} onChange={change} isEditing={!!isEditing} />;
+    case "embed":
+      return <EmbedBlock block={block} onChange={change} isEditing={!!isEditing} />;
+    case "social-share":
+      return <SocialShareBlock block={block} onChange={change} isEditing={!!isEditing} />;
+    case "cookie-banner":
+      return <CookieBannerBlock block={block} onChange={change} isEditing={!!isEditing} />;
+    case "countdown":
+      return <CountdownBlock block={block} onChange={change} isEditing={!!isEditing} />;
+    case "timeline":
+      return <TimelineBlock block={block} onChange={change} isEditing={!!isEditing} />;
     default:
       return null;
   }

@@ -11,6 +11,8 @@ export interface Section {
   blocks: Block[];
   backgroundColor?: string;
   backgroundImage?: string;
+  /** CSS gradient string, e.g. "linear-gradient(135deg, #1e293b, #2563eb)". Overrides backgroundColor. */
+  backgroundGradient?: string;
   paddingTop: number;
   paddingBottom: number;
   paddingLeft: number;

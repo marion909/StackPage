@@ -25,6 +25,8 @@ export default function Topbar() {
   const openTheme = useEditorStore((s) => s.openThemeEditor);
   const isPreviewOpen = useEditorStore((s) => s.isPreviewOpen);
   const togglePreview = useEditorStore((s) => s.togglePreview);
+  const canvasZoom = useEditorStore((s) => s.canvasZoom);
+  const setCanvasZoom = useEditorStore((s) => s.setCanvasZoom);
 
   async function handleSave() {
     if (!project) return;
@@ -99,6 +101,27 @@ export default function Topbar() {
             {mode === "desktop" ? "🖥 Desktop" : mode === "tablet" ? "📱 Tablet" : "📱 Mobile"}
           </button>
         ))}
+      </div>
+
+      <div className="w-px h-6 bg-[#e2e8f0]" />
+
+      {/* Canvas Zoom */}
+      <div className="flex items-center gap-1">
+        <button
+          onClick={() => setCanvasZoom(canvasZoom - 0.1)}
+          className="text-sm text-[#64748b] hover:text-[#1e293b] w-6 h-6 flex items-center justify-center rounded hover:bg-[#f1f5f9] transition-colors"
+          title="Zoom out"
+        >−</button>
+        <button
+          onClick={() => setCanvasZoom(1)}
+          className="text-xs text-[#64748b] hover:text-[#1e293b] min-w-[3rem] text-center py-1 rounded hover:bg-[#f1f5f9] transition-colors"
+          title="Reset zoom"
+        >{Math.round(canvasZoom * 100)}%</button>
+        <button
+          onClick={() => setCanvasZoom(canvasZoom + 0.1)}
+          className="text-sm text-[#64748b] hover:text-[#1e293b] w-6 h-6 flex items-center justify-center rounded hover:bg-[#f1f5f9] transition-colors"
+          title="Zoom in"
+        >+</button>
       </div>
 
       <div className="w-px h-6 bg-[#e2e8f0]" />

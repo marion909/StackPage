@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import type { Block } from "../types/blocks";
 
 export type AppView = "dashboard" | "editor";
 export type PreviewMode = "desktop" | "tablet" | "mobile";
@@ -19,6 +20,10 @@ interface EditorState {
   isThemeEditorOpen: boolean;
   isPreviewOpen: boolean;
   isSaving: boolean;
+  /** Block copied to clipboard for paste operation. */
+  copiedBlock: Block | null;
+  /** Canvas zoom level (0.5–2.0, default 1.0). */
+  canvasZoom: number;
 
   setView: (view: AppView) => void;
   setActivePageId: (id: string | null) => void;
@@ -38,6 +43,9 @@ interface EditorState {
   closeThemeEditor: () => void;
   togglePreview: () => void;
   setSaving: (v: boolean) => void;
+  copyBlock: (block: Block) => void;
+  pasteBlock: (pageId: string, sectionId: string) => void;
+  setCanvasZoom: (zoom: number) => void;
 }
 
 export const useEditorStore = create<EditorState>((set) => ({
@@ -54,6 +62,8 @@ export const useEditorStore = create<EditorState>((set) => ({
   isThemeEditorOpen: false,
   isPreviewOpen: false,
   isSaving: false,
+  copiedBlock: null,
+  canvasZoom: 1,
 
   setView: (view) => set({ view }),
   setActivePageId: (id) => set({ activePageId: id, selectedBlockId: null, selectedSectionId: null, selectedBlockIds: [] }),
@@ -96,4 +106,9 @@ export const useEditorStore = create<EditorState>((set) => ({
   closeThemeEditor: () => set({ isThemeEditorOpen: false }),
   togglePreview: () => set((s) => ({ isPreviewOpen: !s.isPreviewOpen })),
   setSaving: (v) => set({ isSaving: v }),
+  copyBlock: (block) => set({ copiedBlock: block }),
+  pasteBlock: (_pageId, _sectionId) => {
+    // Paste is handled in EditorLayout which has access to both stores
+  },
+  setCanvasZoom: (zoom) => set({ canvasZoom: Math.min(2, Math.max(0.25, zoom)) }),
 }));

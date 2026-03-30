@@ -58,8 +58,48 @@ img { max-width: 100%; height: auto; }
   .sp-nav-hamburger { display: flex; }
 }
 
+/* Mobile nav toggle */
+@media (max-width: 768px) {
+  .sp-nav-links { display: none; }
+  .sp-nav-links.open { display: flex; flex-direction: column; }
+  .sp-nav-hamburger { display: flex; }
+}
+
 @media (min-width: 769px) {
   .sp-nav-hamburger { display: none; }
 }
+
+/* Dark mode support (toggled via [data-theme="dark"] on <html>) */
+[data-theme="dark"] {
+  --color-bg: #0f172a;
+  --color-text: #e2e8f0;
+}
+
+[data-theme="dark"] body {
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+/* Scroll animations */
+[data-anim] { opacity: 0; transition: opacity 0.6s ease, transform 0.6s ease; }
+[data-anim='fade-in'] { transform: none; }
+[data-anim='slide-up'] { transform: translateY(40px); }
+[data-anim='slide-left'] { transform: translateX(-40px); }
+[data-anim='slide-right'] { transform: translateX(40px); }
+[data-anim='zoom-in'] { transform: scale(0.88); }
+[data-anim].sp-anim-active { opacity: 1 !important; transform: none !important; }
+
+/* Dark mode toggle button */
+.sp-dark-toggle {
+  background: transparent;
+  border: 1px solid currentColor;
+  border-radius: 50px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  opacity: 0.8;
+  transition: opacity 0.2s;
+}
+.sp-dark-toggle:hover { opacity: 1; }
 `;
 }

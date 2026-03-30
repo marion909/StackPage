@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useDraggable } from "@dnd-kit/core";
 import { BLOCK_TYPES, type BlockType } from "../../../types/blocks";
 import { useProjectStore } from "../../../stores/useProjectStore";
@@ -44,6 +45,14 @@ export default function ComponentsPanel() {
   const selectBlock = useEditorStore((s) => s.selectBlock);
   const presets = usePresetsStore((s) => s.presets);
   const deletePreset = usePresetsStore((s) => s.deletePreset);
+  const [search, setSearch] = useState("");
+
+  const filtered = search.trim()
+    ? BLOCK_TYPES.filter((b) =>
+        b.label.toLowerCase().includes(search.toLowerCase()) ||
+        b.category.toLowerCase().includes(search.toLowerCase())
+      )
+    : null; // null = show all by category
 
   function handleAddBlock(type: BlockType) {
     if (!activePageId || !project) return;
@@ -85,6 +94,30 @@ export default function ComponentsPanel() {
 
   return (
     <div className="p-3">
+      {/* Search */}
+      <input
+        type="text"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        placeholder="Search blocks…"
+        className="w-full px-2.5 py-1.5 mb-3 text-xs border border-[#e2e8f0] rounded-lg focus:outline-none focus:border-[#2563eb] text-[#1e293b] bg-[#f8fafc]"
+      />
+
+      {/* Search results */}
+      {filtered ? (
+        <div className="mb-4">
+          {filtered.length === 0 ? (
+            <p className="text-xs text-[#94a3b8] text-center py-4">No results</p>
+          ) : (
+            <div className="grid grid-cols-2 gap-1.5">
+              {filtered.map((b) => (
+                <DraggablePaletteItem key={b.type} blockType={b.type} label={b.label} icon={b.icon} onClick={() => handleAddBlock(b.type)} />
+              ))}
+            </div>
+          )}
+        </div>
+      ) : (
+        <>
       {/* Presets */}
       {presets.length > 0 && (
         <div className="mb-4">
@@ -135,6 +168,8 @@ export default function ComponentsPanel() {
           </div>
         </div>
       ))}
+        </>
+      )}
     </div>
   );
 }

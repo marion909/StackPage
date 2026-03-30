@@ -167,3 +167,47 @@ interface ProductCardItem {
 
 - [x] **Product Landing Page** template — Hero + Product Detail + Product Grid (3 related items) + CTA section
 - [x] **Shop Showcase** template — Navigation + Product Grid (6 items, 3 cols) + Footer
+
+---
+
+## Nice to Have — Backlog
+
+Features that would improve the product but are not planned for a specific release.
+
+### Editor UX
+- [ ] **Block search / filter in palette** — type to filter available block types
+- [ ] **Drag block between sections** — currently blocks can only be reordered within a section
+- [ ] **Copy / paste blocks** — Ctrl+C / Ctrl+V to copy a block within or across pages
+- [ ] **Section collapse** — collapse a section in the editor to reduce canvas clutter
+- [ ] **Canvas zoom** — zoom in/out on the canvas (Ctrl+scroll)
+- [ ] **Right-click context menu** — duplicate, delete, move up/down via right-click on canvas
+- [ ] **Block notes/comments** — attach an internal note to any block (not exported)
+
+### Blocks & Content
+- [ ] **FAQ / Accordion block** — expandable question/answer pairs
+- [ ] **Timeline block** — vertical or horizontal step-based timeline
+- [ ] **Countdown block** — live JS countdown to a target date
+- [ ] **Cookie Banner block** — GDPR-compliant cookie notice with accept/decline
+- [ ] **Social Share block** — share buttons for Twitter/X, Facebook, LinkedIn, WhatsApp
+- [ ] **Embed block** — generic `<iframe>` or raw HTML embed (e.g. Typeform, Cal.com)
+- [ ] **Before/After Slider block** — image comparison slider
+- [ ] **Lottie / SVG Animation block** — embed a Lottie JSON animation
+
+### Theme & Styling
+- [ ] **Dark mode toggle** — let exported sites support light/dark mode switching
+- [ ] **Custom CSS field** — per-block or per-page raw CSS override
+- [ ] **Google Fonts picker** — searchable dropdown for all Google Fonts instead of a text input
+- [ ] **Gradient background** — support linear/radial gradients on sections and blocks
+- [ ] **Animation presets** — simple entrance animations (fade-in, slide-up) on scroll via CSS
+
+### Export & Deploy
+- [ ] **GitHub Pages deploy** — push exported files to a GitHub Pages branch automatically
+- [ ] **ZIP download** — download the entire export as a ZIP without needing to choose a folder
+- [ ] **Custom domain mapping in Netlify** — set a custom domain after Netlify deploy
+- [ ] **FTP incremental sync** — only upload changed files instead of the full site
+
+### Project Management
+- [ ] **Cloud sync / backup** — optional sync to a user-configured S3 / Dropbox / OneDrive folder
+- [ ] **Multi-language pages** — manage translations of a page side-by-side
+- [ ] **Project templates marketplace** — browse and import community-made templates
+- [ ] **Collaboration (future)** — share a project link for read-only or comment-only review

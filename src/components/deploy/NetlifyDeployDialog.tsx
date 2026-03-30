@@ -33,6 +33,9 @@ export default function NetlifyDeployDialog({ onClose }: Props) {
   const [step, setStep] = useState<Step>("idle");
   const [statusMsg, setStatusMsg] = useState("");
   const [error, setError] = useState("");
+  const [customDomain, setCustomDomain] = useState("");
+  const [domainSaving, setDomainSaving] = useState(false);
+  const [domainMsg, setDomainMsg] = useState("");
 
   const isBusy = step === "zipping" || step === "deploying";
 
@@ -137,6 +140,32 @@ export default function NetlifyDeployDialog({ onClose }: Props) {
     }
   }
 
+  async function handleSetDomain() {
+    const domain = customDomain.trim().replace(/^https?:\/\//i, "");
+    if (!domain || !siteId) return;
+    setDomainSaving(true);
+    setDomainMsg("");
+    try {
+      const res = await fetch(`https://api.netlify.com/api/v1/sites/${encodeURIComponent(siteId)}`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token.trim()}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ custom_domain: domain }),
+      });
+      if (!res.ok) {
+        const body = await res.text();
+        throw new Error(`${res.status} ${body}`);
+      }
+      setDomainMsg(`✓ Custom domain set to ${domain}`);
+    } catch (e: unknown) {
+      setDomainMsg(`Error: ${String(e)}`);
+    } finally {
+      setDomainSaving(false);
+    }
+  }
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 p-6 flex flex-col gap-5 max-h-[90vh] overflow-y-auto">
@@ -172,6 +201,30 @@ export default function NetlifyDeployDialog({ onClose }: Props) {
                 {deployUrl}
               </a>
             )}
+
+            {/* Custom domain */}
+            <div className="w-full flex flex-col gap-1 mt-1">
+              <label className="text-xs font-medium text-[#374151]">Custom Domain <span className="text-[#94a3b8] font-normal">(optional)</span></label>
+              <div className="flex gap-2">
+                <input
+                  value={customDomain}
+                  onChange={(e) => setCustomDomain(e.target.value)}
+                  placeholder="yourdomain.com"
+                  disabled={domainSaving}
+                  className="flex-1 border border-[#d1d5db] rounded-lg px-3 py-2 text-sm text-[#1e293b] focus:outline-none focus:ring-2 focus:ring-[#00c7b7]/30 focus:border-[#00c7b7] disabled:opacity-60"
+                />
+                <button
+                  onClick={handleSetDomain}
+                  disabled={domainSaving || !customDomain.trim()}
+                  className="bg-[#00c7b7] hover:bg-[#00b3a4] disabled:opacity-60 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap"
+                >
+                  {domainSaving ? "…" : "Set"}
+                </button>
+              </div>
+              {domainMsg && (
+                <p className={`text-xs mt-0.5 ${domainMsg.startsWith("Error") ? "text-red-500" : "text-emerald-600"}`}>{domainMsg}</p>
+              )}
+            </div>
             <button
               onClick={onClose}
               className="mt-2 w-full bg-[#00c7b7] hover:bg-[#00b3a4] text-white py-2.5 rounded-lg text-sm font-medium transition-colors"

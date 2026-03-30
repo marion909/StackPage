@@ -27,6 +27,7 @@ import { createDefaultBlock } from "../../lib/blockDefaults";
 import { cmd_saveProject } from "../../lib/tauri";
 import type { BlockType } from "../../types/blocks";
 import { BLOCK_TYPES } from "../../types/blocks";
+import { nanoid } from "../../types/nanoid";
 
 const PALETTE_PREFIX = "palette--";
 
@@ -54,6 +55,9 @@ export default function EditorLayout() {
   const selectedBlockId = useEditorStore((s) => s.selectedBlockId);
   const selectedBlockIds = useEditorStore((s) => s.selectedBlockIds);
   const selectedSectionId = useEditorStore((s) => s.selectedSectionId);
+
+  const copiedBlock = useEditorStore((s) => s.copiedBlock);
+  const copyBlock = useEditorStore((s) => s.copyBlock);
 
   const [draggingPaletteType, setDraggingPaletteType] = useState<BlockType | null>(null);
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -93,6 +97,21 @@ export default function EditorLayout() {
         return;
       }
 
+      // Copy / Paste blocks (Ctrl+C / Ctrl+V)
+      if ((e.ctrlKey || e.metaKey) && e.key === "c" && !isEditable && selectedBlockId && selectedSectionId && activePageId) {
+        e.preventDefault();
+        const page = project?.pages.find((p) => p.id === activePageId);
+        const section = page?.sections.find((s) => s.id === selectedSectionId);
+        const block = section?.blocks.find((b) => b.id === selectedBlockId);
+        if (block) copyBlock(block);
+        return;
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key === "v" && !isEditable && copiedBlock && selectedSectionId && activePageId) {
+        e.preventDefault();
+        addBlock(activePageId, selectedSectionId, { ...copiedBlock, id: nanoid() });
+        return;
+      }
+
       if (isEditable) return;
 
       // Delete / Backspace → remove selected block(s)
@@ -117,7 +136,7 @@ export default function EditorLayout() {
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [selectedBlockId, selectedBlockIds, selectedSectionId, activePageId, deleteBlock, deleteBlocks, clearSelection, selectBlock, undo, redo]);
+  }, [selectedBlockId, selectedBlockIds, selectedSectionId, activePageId, deleteBlock, deleteBlocks, clearSelection, selectBlock, undo, redo, copiedBlock, copyBlock, addBlock, project]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),

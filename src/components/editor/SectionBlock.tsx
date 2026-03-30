@@ -68,6 +68,7 @@ function BlocksSortable({ section, pageId }: { section: Section; pageId: string 
 
 export default function SectionBlock({ section, pageId }: Props) {
   const [hover, setHover] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
   const deleteSection = useProjectStore((s) => s.deleteSection);
   const duplicateSection = useProjectStore((s) => s.duplicateSection);
   const updateSection = useProjectStore((s) => s.updateSection);
@@ -144,6 +145,16 @@ export default function SectionBlock({ section, pageId }: Props) {
             <button
               onClick={(e) => {
                 e.stopPropagation();
+                setCollapsed((c) => !c);
+              }}
+              className="text-white/70 hover:text-white text-xs px-1"
+              title={collapsed ? "Expand section" : "Collapse section"}
+            >
+              {collapsed ? "▾" : "▴"}
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
                 if (confirm("Delete this section?")) deleteSection(pageId, section.id);
               }}
               className="text-white/70 hover:text-white text-xs"
@@ -158,8 +169,9 @@ export default function SectionBlock({ section, pageId }: Props) {
       {/* Section content */}
       <div
         style={{
-          backgroundColor: section.backgroundColor,
-          backgroundImage: section.backgroundImage ? `url(${section.backgroundImage})` : undefined,
+          backgroundColor: section.backgroundGradient ? undefined : section.backgroundColor,
+          background: section.backgroundGradient ?? undefined,
+          backgroundImage: !section.backgroundGradient && section.backgroundImage ? `url(${section.backgroundImage})` : undefined,
           backgroundSize: "cover",
           backgroundPosition: "center",
           paddingTop: `${section.paddingTop}px`,
@@ -174,7 +186,11 @@ export default function SectionBlock({ section, pageId }: Props) {
             margin: "0 auto",
           }}
         >
-          {section.blocks.length === 0 ? (
+          {collapsed ? (
+            <div className="py-2 text-center text-xs text-[#94a3b8] italic">
+              {section.blocks.length} block{section.blocks.length !== 1 ? "s" : ""} (collapsed)
+            </div>
+          ) : section.blocks.length === 0 ? (
             <div className="border border-dashed border-[#e2e8f0] rounded-lg py-8 text-center text-xs text-[#94a3b8]">
               Drop components here or click in the Components panel
             </div>

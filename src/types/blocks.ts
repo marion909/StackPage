@@ -25,13 +25,25 @@ export type BlockType =
   | "product-card"
   | "product-grid"
   | "product-detail"
-  | "cart-button";
+  | "cart-button"
+  | "faq"
+  | "embed"
+  | "social-share"
+  | "cookie-banner"
+  | "countdown"
+  | "timeline";
 
 interface BaseBlock {
   id: string;
   type: BlockType;
   /** Optional per-block corner radius in px. Falls back to theme.borderRadius if not set. */
   cornerRadius?: number;
+  /** Editor-only notes / comments for this block. Not exported to HTML. */
+  notes?: string;
+  /** Custom CSS injected into the exported page for this block (scoped via data-block-id). */
+  customCss?: string;
+  /** Scroll animation preset for this block in the exported site. */
+  animation?: "none" | "fade-in" | "slide-up" | "slide-left" | "slide-right" | "zoom-in";
 }
 
 export interface HeadingBlockProps {
@@ -519,6 +531,114 @@ export interface CartButtonBlock extends BaseBlock {
   props: CartButtonProps;
 }
 
+// ─── FAQ ──────────────────────────────────────────────────────────────────
+export interface FaqItem {
+  id: string;
+  question: string;
+  answer: string;
+  open?: boolean;
+}
+export interface FaqProps {
+  items: FaqItem[];
+  headingText?: string;
+  accentColor: string;
+  backgroundColor: string;
+  textColor: string;
+  paddingTop: number;
+  paddingBottom: number;
+}
+export interface FaqBlock extends BaseBlock {
+  type: "faq";
+  props: FaqProps;
+}
+
+// ─── Embed ────────────────────────────────────────────────────────────────
+export interface EmbedProps {
+  url: string;
+  height: number;
+  title: string;
+  allowFullscreen: boolean;
+  align: "left" | "center" | "right";
+}
+export interface EmbedBlock extends BaseBlock {
+  type: "embed";
+  props: EmbedProps;
+}
+
+// ─── Social Share ─────────────────────────────────────────────────────────
+export interface SocialShareProps {
+  url?: string; // If empty, use current page URL
+  title?: string;
+  platforms: ("twitter" | "facebook" | "linkedin" | "whatsapp")[];
+  align: "left" | "center" | "right";
+  buttonStyle: "icon" | "label" | "both";
+  iconColor: string;
+  backgroundColor: string;
+}
+export interface SocialShareBlock extends BaseBlock {
+  type: "social-share";
+  props: SocialShareProps;
+}
+
+// ─── Cookie Banner ────────────────────────────────────────────────────────
+export interface CookieBannerProps {
+  message: string;
+  acceptLabel: string;
+  declineLabel: string;
+  backgroundColor: string;
+  textColor: string;
+  buttonColor: string;
+  storageKey: string;
+}
+export interface CookieBannerBlock extends BaseBlock {
+  type: "cookie-banner";
+  props: CookieBannerProps;
+}
+
+// ─── Countdown ────────────────────────────────────────────────────────────
+export interface CountdownProps {
+  targetDate: string; // ISO date string
+  heading?: string;
+  expiredText: string;
+  accentColor: string;
+  textColor: string;
+  backgroundColor: string;
+  showDays: boolean;
+  showHours: boolean;
+  showMinutes: boolean;
+  showSeconds: boolean;
+  align: "left" | "center" | "right";
+  paddingTop: number;
+  paddingBottom: number;
+}
+export interface CountdownBlock extends BaseBlock {
+  type: "countdown";
+  props: CountdownProps;
+}
+
+// ─── Timeline ─────────────────────────────────────────────────────────────
+export interface TimelineItem {
+  id: string;
+  date: string;
+  title: string;
+  content: string;
+  icon?: string;
+}
+export interface TimelineProps {
+  items: TimelineItem[];
+  accentColor: string;
+  dateColor: string;
+  textColor: string;
+  lineColor: string;
+  align: "left" | "center";
+  paddingTop: number;
+  paddingBottom: number;
+}
+export interface TimelineBlock extends BaseBlock {
+  type: "timeline";
+  props: TimelineProps;
+}
+
 export type Block =
   | HeadingBlock
   | TextBlock
@@ -546,7 +666,13 @@ export type Block =
   | ProductCardBlock
   | ProductGridBlock
   | ProductDetailBlock
-  | CartButtonBlock;
+  | CartButtonBlock
+  | FaqBlock
+  | EmbedBlock
+  | SocialShareBlock
+  | CookieBannerBlock
+  | CountdownBlock
+  | TimelineBlock;
 
 // Block type display metadata
 export const BLOCK_TYPES: { type: BlockType; label: string; icon: string; category: string }[] = [
@@ -577,4 +703,10 @@ export const BLOCK_TYPES: { type: BlockType; label: string; icon: string; catego
   { type: "product-grid", label: "Product Grid", icon: "🗂", category: "Shop" },
   { type: "product-detail", label: "Product Detail", icon: "📦", category: "Shop" },
   { type: "cart-button", label: "Cart Button", icon: "🛒", category: "Shop" },
+  { type: "faq", label: "FAQ", icon: "❓", category: "Sections" },
+  { type: "embed", label: "Embed", icon: "⊕", category: "Media" },
+  { type: "social-share", label: "Social Share", icon: "↗", category: "Interactive" },
+  { type: "cookie-banner", label: "Cookie Banner", icon: "🍪", category: "Interactive" },
+  { type: "countdown", label: "Countdown", icon: "⏱", category: "Sections" },
+  { type: "timeline", label: "Timeline", icon: "📅", category: "Sections" },
 ];
