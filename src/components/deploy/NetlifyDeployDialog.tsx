@@ -1,5 +1,6 @@
 import { useState } from "react";
 import JSZip from "jszip";
+import { fetch } from "@tauri-apps/plugin-http";
 import { useProjectStore } from "../../stores/useProjectStore";
 import { exportProject } from "../../engine/export/htmlGenerator";
 
@@ -71,12 +72,8 @@ export default function NetlifyDeployDialog({ onClose }: Props) {
       };
 
       let deployEndpoint: string;
-      if (siteId.trim()) {
-        // Deploy to existing site
-        setStatusMsg(`Deploying to site ${siteId.trim()}…`);
-        deployEndpoint = `${baseUrl}/sites/${encodeURIComponent(siteId.trim())}/deploys`;
-      } else {
-        // Create new site first, then deploy
+
+      async function createNewSite(): Promise<string> {
         setStatusMsg("Creating new Netlify site…");
         const createRes = await fetch(`${baseUrl}/sites`, {
           method: "POST",
@@ -84,28 +81,46 @@ export default function NetlifyDeployDialog({ onClose }: Props) {
             Authorization: `Bearer ${trimToken}`,
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ name: project.name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "") }),
+          body: JSON.stringify({}),
         });
-
         if (!createRes.ok) {
           const body = await createRes.text();
           throw new Error(`Failed to create Netlify site: ${createRes.status} ${body}`);
         }
-
         const siteData = (await createRes.json()) as { id: string };
-        const newSiteId = siteData.id;
-        setSiteId(newSiteId);
-        saveSiteId(newSiteId);
-
-        setStatusMsg(`Uploading to new site ${newSiteId}…`);
-        deployEndpoint = `${baseUrl}/sites/${newSiteId}/deploys`;
+        setSiteId(siteData.id);
+        saveSiteId(siteData.id);
+        return siteData.id;
       }
 
-      const deployRes = await fetch(deployEndpoint, {
+      if (siteId.trim()) {
+        // Deploy to existing site
+        setStatusMsg(`Deploying to site ${siteId.trim()}…`);
+        deployEndpoint = `${baseUrl}/sites/${encodeURIComponent(siteId.trim())}/deploys`;
+      } else {
+        const newId = await createNewSite();
+        setStatusMsg(`Uploading to new site ${newId}…`);
+        deployEndpoint = `${baseUrl}/sites/${newId}/deploys`;
+      }
+
+      let deployRes = await fetch(deployEndpoint, {
         method: "POST",
         headers,
         body: zipBlob,
       });
+
+      // If the saved site no longer exists, create a new one and retry once
+      if (deployRes.status === 404) {
+        setSiteId("");
+        saveSiteId("");
+        const newId = await createNewSite();
+        setStatusMsg(`Uploading to new site ${newId}…`);
+        deployRes = await fetch(`${baseUrl}/sites/${newId}/deploys`, {
+          method: "POST",
+          headers,
+          body: zipBlob,
+        });
+      }
 
       if (!deployRes.ok) {
         const body = await deployRes.text();

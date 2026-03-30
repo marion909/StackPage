@@ -6,6 +6,10 @@
   "permissions": [
     "core:default",
     "opener:default",
+    {
+      "identifier": "opener:allow-open-url",
+      "allow": [{ "url": "file://**" }]
+    },
     "dialog:default",
     "dialog:allow-open",
     "dialog:allow-save",
@@ -16,6 +20,14 @@
     "fs:allow-mkdir",
     "fs:allow-remove",
     "fs:allow-exists",
-    "fs:allow-rename"
+    "fs:allow-rename",
+    "http:default",
+    {
+      "identifier": "http:allow-fetch",
+      "allow": [
+        { "url": "https://api.netlify.com/**" },
+        { "url": "https://stackpage.at/**" }
+      ]
+    }
   ]
 }

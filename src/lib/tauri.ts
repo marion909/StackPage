@@ -1,7 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { open, save } from "@tauri-apps/plugin-dialog";
 import { writeTextFile, readTextFile } from "@tauri-apps/plugin-fs";
-import { openPath } from "@tauri-apps/plugin-opener";
+import { openUrl } from "@tauri-apps/plugin-opener";
 import type { Project, ProjectMeta, Page } from "../types/project";
 
 // ─── Project Commands ──────────────────────────────────────────────────────
@@ -105,11 +105,9 @@ export async function cmd_deploySftp(
 }
 
 export async function openInBrowser(filePath: string): Promise<void> {
-  // openPath needs a proper file:// URL on all platforms
-  const url = filePath.startsWith("file://")
-    ? filePath
-    : "file:///" + filePath.replace(/\\/g, "/").replace(/^\/+/, "");
-  await openPath(url);
+  // Build a proper file:// URL from a native Windows path
+  const url = "file:///" + filePath.replace(/\\/g, "/");
+  await openUrl(url);
 }
 
 // ─── Dialog Helpers ────────────────────────────────────────────────────────

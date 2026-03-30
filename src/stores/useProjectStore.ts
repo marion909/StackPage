@@ -15,6 +15,7 @@ interface ProjectState {
   setProject: (project: Project) => void;
   clearProject: () => void;
   updateProjectMeta: (updates: Partial<Pick<Project, "name" | "description" | "author" | "tags" | "siteUrl" | "lang" | "thumbnail">>) => void;
+  updateExportSettings: (updates: Partial<Project["exportSettings"]>) => void;
   markClean: () => void;
 
   // History
@@ -91,6 +92,13 @@ export const useProjectStore = create<ProjectState>((set) => ({
   updateProjectMeta: (updates) =>
     set((s) =>
       s.project ? { project: touch({ ...s.project, ...updates }), isDirty: true } : s
+    ),
+
+  updateExportSettings: (updates) =>
+    set((s) =>
+      s.project
+        ? { project: touch({ ...s.project, exportSettings: { ...s.project.exportSettings, ...updates } }), isDirty: true }
+        : s
     ),
 
   // ─── History ──────────────────────────────────────────────────────────────

@@ -48,6 +48,7 @@ type Step = "idle" | "exporting" | "done" | "error";
 export default function ExportDialog() {
   const project = useProjectStore((s) => s.project)!;
   const updateProjectMeta = useProjectStore((s) => s.updateProjectMeta);
+  const updateExportSettings = useProjectStore((s) => s.updateExportSettings);
   const closeExport = useEditorStore((s) => s.closeExportDialog);
 
   const [outputPath, setOutputPath] = useState<string>(
@@ -62,7 +63,10 @@ export default function ExportDialog() {
 
   async function handlePickDir() {
     const dir = await pickDirectory();
-    if (dir) setOutputPath(dir);
+    if (dir) {
+      setOutputPath(dir);
+      updateExportSettings({ outputPath: dir });
+    }
   }
 
   async function handleExport() {
@@ -73,8 +77,9 @@ export default function ExportDialog() {
     setStep("exporting");
     setError("");
     try {
-      // Persist siteUrl + minify back to project
+      // Persist siteUrl + minify + outputPath back to project
       updateProjectMeta({ siteUrl: siteUrl.trim() || undefined });
+      updateExportSettings({ outputPath: outputPath.trim(), minify });
       const exportFiles = exportProject({ ...project, siteUrl: siteUrl.trim() || undefined, exportSettings: { ...project.exportSettings, minify } });
       await cmd_writeExportFiles(exportFiles, outputPath.trim());
 
@@ -91,8 +96,12 @@ export default function ExportDialog() {
   }
 
   async function handlePreview() {
-    const indexPath = lastOutputPath.replace(/\\/g, "/") + "/index.html";
-    await openInBrowser(indexPath);
+    try {
+      const indexPath = lastOutputPath.replace(/\\/g, "/") + "/index.html";
+      await openInBrowser(indexPath);
+    } catch (e: unknown) {
+      setError("Could not open browser: " + String(e));
+    }
   }
 
   return (
@@ -105,7 +114,7 @@ export default function ExportDialog() {
             onClick={closeExport}
             className="text-[#94a3b8] hover:text-[#1e293b] text-xl leading-none"
           >
-            âœ•
+            ✕
           </button>
         </div>
 
@@ -113,7 +122,7 @@ export default function ExportDialog() {
           <>
             <div className="flex flex-col items-center gap-3 py-4">
               <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center text-2xl">
-                âœ“
+                ✓
               </div>
               <p className="text-sm text-[#64748b] text-center">
                 {fileCount} file{fileCount !== 1 ? "s" : ""} exported successfully to:
@@ -136,6 +145,7 @@ export default function ExportDialog() {
                 Close
               </button>
             </div>
+            {error && <p className="text-sm text-red-500 text-center">{error}</p>}
           </>
         ) : (
           <>
@@ -147,14 +157,14 @@ export default function ExportDialog() {
                   type="text"
                   value={outputPath}
                   onChange={(e) => setOutputPath(e.target.value)}
-                  placeholder="Choose a folderâ€¦"
+                  placeholder="Choose a folder…"
                   className="flex-1 border border-[#d1d5db] rounded-lg px-3 py-2 text-sm text-[#1e293b] focus:outline-none focus:ring-2 focus:ring-[#2563eb]/30 focus:border-[#2563eb]"
                 />
                 <button
                   onClick={handlePickDir}
                   className="px-3 py-2 border border-[#d1d5db] rounded-lg text-sm text-[#64748b] hover:bg-[#f1f5f9] transition-colors shrink-0"
                 >
-                  Browseâ€¦
+                  Browse…
                 </button>
               </div>
             </div>
@@ -204,7 +214,7 @@ export default function ExportDialog() {
                 disabled={step === "exporting"}
                 className="flex-1 bg-[#2563eb] hover:bg-[#1d4ed8] disabled:opacity-60 text-white py-2.5 rounded-lg text-sm font-medium transition-colors"
               >
-                {step === "exporting" ? "Exportingâ€¦" : "Export"}
+                {step === "exporting" ? "Exporting…" : "Export"}
               </button>
             </div>
           </>
