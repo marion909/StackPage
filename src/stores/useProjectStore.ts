@@ -187,29 +187,69 @@ export const useProjectStore = create<ProjectState>((set) => ({
     set((s) => {
       if (!s.project) return s;
 
-      // Find the section being updated to check if it's global
+      // Find the section being updated
       const targetSection = s.project.pages
         .flatMap((p) => p.sections)
         .find((sec) => sec.id === sectionId);
-      const isGlobal = targetSection?.isGlobal && targetSection.globalId;
+      if (!targetSection) return s;
+
+      const wasGlobal = targetSection.isGlobal && targetSection.globalId;
+      const becomingGlobal = updates.isGlobal === true && !targetSection.isGlobal;
+      const globalId = (updates.globalId as string | undefined) ?? targetSection.globalId;
+
+      // Detect if navigation or footer (insert at start vs end on other pages)
+      const hasNav = targetSection.blocks.some((b) => b.type === "navigation");
+      const hasFooter = targetSection.blocks.some((b) => b.type === "footer");
+
+      const updatedSection: Section = { ...targetSection, ...updates };
+
+      let pages = s.project.pages.map((p) => {
+        // Always update on origin page
+        if (p.id === pageId) {
+          return {
+            ...p,
+            sections: p.sections.map((sec) =>
+              sec.id === sectionId ? updatedSection : sec
+            ),
+          };
+        }
+
+        // Sync changes to existing twins on other pages
+        if (wasGlobal) {
+          const hasTwin = p.sections.some((sec) => sec.globalId === targetSection.globalId);
+          if (hasTwin) {
+            return {
+              ...p,
+              sections: p.sections.map((sec) =>
+                sec.globalId === targetSection.globalId ? { ...sec, ...updates } : sec
+              ),
+            };
+          }
+        }
+
+        // First time going global → add a copy to this page
+        if (becomingGlobal && globalId) {
+          const alreadyHas = p.sections.some((sec) => sec.globalId === globalId);
+          if (!alreadyHas) {
+            const copy: Section = {
+              ...JSON.parse(JSON.stringify(updatedSection)),
+              id: nanoid(),
+              globalId,
+              isGlobal: true,
+            };
+            const sections = [...p.sections];
+            if (hasNav) sections.unshift(copy);
+            else if (hasFooter) sections.push(copy);
+            else sections.push(copy);
+            return { ...p, sections };
+          }
+        }
+
+        return p;
+      });
 
       return {
-        project: touch({
-          ...s.project,
-          pages: s.project.pages.map((p) =>
-            p.id === pageId || (isGlobal && p.sections.some((sec) => sec.globalId === targetSection!.globalId))
-              ? {
-                  ...p,
-                  sections: p.sections.map((sec) => {
-                    // Update the specific section directly, or a global twin
-                    if (sec.id === sectionId) return { ...sec, ...updates };
-                    if (isGlobal && sec.globalId === targetSection!.globalId) return { ...sec, ...updates };
-                    return sec;
-                  }),
-                }
-              : p
-          ),
-        }),
+        project: touch({ ...s.project, pages }),
         isDirty: true,
         past: [...s.past, s.project].slice(-MAX_HISTORY),
         future: [],

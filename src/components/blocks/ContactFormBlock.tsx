@@ -83,6 +83,25 @@ export default function ContactFormBlock({ block, onChange: _onChange, isEditing
                   background: isEditing ? "#f9fafb" : "#ffffff",
                 }}
               />
+            ) : field.type === "select" ? (
+              <select
+                name={field.id}
+                required={field.required}
+                disabled={isEditing}
+                style={{
+                  border: "1px solid #d1d5db",
+                  borderRadius: "8px",
+                  padding: "10px 12px",
+                  fontSize: "0.9rem",
+                  background: isEditing ? "#f9fafb" : "#ffffff",
+                  width: "100%",
+                }}
+              >
+                <option value="">{field.placeholder ?? "-- Select --"}</option>
+                {(field.selectOptions ?? "").split(",").map((o) => o.trim()).filter(Boolean).map((o) => (
+                  <option key={o} value={o}>{o}</option>
+                ))}
+              </select>
             ) : (
               <input
                 type={field.type}

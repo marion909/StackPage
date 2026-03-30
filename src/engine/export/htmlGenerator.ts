@@ -224,9 +224,16 @@ function generateBlockInnerHTML(block: Block): string {
 
       const fieldsHtml = fields.map((f) => {
         const labelHtml = `<label style="display:block;font-size:0.875rem;font-weight:600;margin-bottom:4px">${escHtml(f.label)}${f.required ? '<span style="color:#ef4444;margin-left:2px">*</span>' : ""}</label>`;
-        const input = f.type === "textarea"
-          ? `<textarea name="${escAttr(f.id)}" placeholder="${escAttr(f.label)}" rows="4" ${f.required ? "required" : ""} style="${inputStyle}"></textarea>`
-          : `<input type="${f.type}" name="${escAttr(f.id)}" placeholder="${escAttr(f.label)}" ${f.required ? "required" : ""} style="${inputStyle}">`;
+        let input: string;
+        if (f.type === "textarea") {
+          input = `<textarea name="${escAttr(f.id)}" placeholder="${escAttr(f.label)}" rows="4" ${f.required ? "required" : ""} style="${inputStyle}"></textarea>`;
+        } else if (f.type === "select") {
+          const opts = (f.selectOptions ?? "").split(",").map((o) => o.trim()).filter(Boolean);
+          const optionsHtml = [`<option value="">${escHtml(f.placeholder ?? "-- Select --")}</option>`, ...opts.map((o) => `<option value="${escAttr(o)}">${escHtml(o)}</option>`)].join("");
+          input = `<select name="${escAttr(f.id)}" ${f.required ? "required" : ""} style="${inputStyle}">${optionsHtml}</select>`;
+        } else {
+          input = `<input type="${f.type}" name="${escAttr(f.id)}" placeholder="${escAttr(f.label)}" ${f.required ? "required" : ""} style="${inputStyle}">`;
+        }
         return `<div>${labelHtml}${input}</div>`;
       }).join("");
 

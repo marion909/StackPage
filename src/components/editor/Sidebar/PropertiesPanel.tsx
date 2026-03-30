@@ -101,6 +101,10 @@ const ALIGN_OPTIONS = [
 export default function PropertiesPanel({ block, pageId, sectionId }: Props) {
   const updateBlock = useProjectStore((s) => s.updateBlock);
   const patchBlock = useProjectStore((s) => s.patchBlock);
+  const updateSection = useProjectStore((s) => s.updateSection);
+  const section = useProjectStore((s) =>
+    s.project?.pages.find((p) => p.id === pageId)?.sections.find((sec) => sec.id === sectionId)
+  );
   const theme = useProjectStore((s) => s.project?.theme);
 
   function update(props: Record<string, unknown>) {
@@ -230,6 +234,24 @@ export default function PropertiesPanel({ block, pageId, sectionId }: Props) {
 
       {block.type === "navigation" && (
         <>
+          <Field label="Global (all pages)">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={section?.isGlobal ?? false}
+                onChange={() => {
+                  const gId = section?.globalId ?? nanoid();
+                  updateSection(pageId, sectionId, {
+                    isGlobal: !section?.isGlobal,
+                    globalId: !section?.isGlobal ? gId : undefined,
+                  });
+                }}
+              />
+              <span className="text-xs text-[#374151]">
+                {section?.isGlobal ? "Synced on all pages" : "Show on all pages"}
+              </span>
+            </label>
+          </Field>
           <Field label="Logo Text">
             <TextInput value={block.props.logoText} onChange={(v) => update({ logoText: v })} />
           </Field>
@@ -289,6 +311,24 @@ export default function PropertiesPanel({ block, pageId, sectionId }: Props) {
 
       {block.type === "footer" && (
         <>
+          <Field label="Global (all pages)">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={section?.isGlobal ?? false}
+                onChange={() => {
+                  const gId = section?.globalId ?? nanoid();
+                  updateSection(pageId, sectionId, {
+                    isGlobal: !section?.isGlobal,
+                    globalId: !section?.isGlobal ? gId : undefined,
+                  });
+                }}
+              />
+              <span className="text-xs text-[#374151]">
+                {section?.isGlobal ? "Synced on all pages" : "Show on all pages"}
+              </span>
+            </label>
+          </Field>
           <Field label="Company Name">
             <TextInput value={block.props.companyName} onChange={(v) => update({ companyName: v })} />
           </Field>
@@ -464,6 +504,12 @@ export default function PropertiesPanel({ block, pageId, sectionId }: Props) {
                       <option value="email">Email</option>
                       <option value="tel">Phone</option>
                       <option value="textarea">Textarea</option>
+                      <option value="date">Date</option>
+                      <option value="time">Time</option>
+                      <option value="datetime-local">Date &amp; Time</option>
+                      <option value="number">Number</option>
+                      <option value="url">URL</option>
+                      <option value="select">Dropdown (select)</option>
                     </select>
                     <label className="flex items-center gap-1 text-[11px] text-[#374151] cursor-pointer">
                       <input
@@ -474,6 +520,15 @@ export default function PropertiesPanel({ block, pageId, sectionId }: Props) {
                       Required
                     </label>
                   </div>
+                  {field.type === "select" && (
+                    <input
+                      type="text"
+                      placeholder="Options: Option 1, Option 2, Option 3"
+                      value={field.selectOptions ?? ""}
+                      onChange={(e) => update({ fields: block.props.fields.map((f, i) => i === idx ? { ...f, selectOptions: e.target.value } : f) })}
+                      className="w-full border border-[#d1d5db] rounded px-2 py-1 text-xs mt-1 focus:outline-none focus:ring-1 focus:ring-[#2563eb]"
+                    />
+                  )}
                 </div>
               ))}
             </div>

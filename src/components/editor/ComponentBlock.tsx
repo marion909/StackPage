@@ -41,6 +41,7 @@ export default function ComponentBlock({ block, pageId, sectionId }: Props) {
     opacity: isDragging ? 0.4 : 1,
     borderRadius: `${cornerRadius}px`,
     overflow: "hidden" as const,
+    minHeight: "20px",
   };
 
   function handlePropChange(props: Partial<Block["props"]>) {
@@ -73,7 +74,7 @@ export default function ComponentBlock({ block, pageId, sectionId }: Props) {
     >
       {/* Block toolbar */}
       {(hover || isSelected) && (
-        <div className="absolute -top-6 right-0 flex items-center gap-1 bg-[#2563eb] text-white text-xs px-2 py-0.5 rounded-t z-10">
+        <div className="absolute top-0 right-0 flex items-center gap-1 bg-[#2563eb] text-white text-xs px-2 py-0.5 rounded-bl z-10">
           {/* Drag handle */}
           <button
             {...listeners}

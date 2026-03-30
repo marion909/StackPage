@@ -105,7 +105,11 @@ export async function cmd_deploySftp(
 }
 
 export async function openInBrowser(filePath: string): Promise<void> {
-  await openPath(filePath);
+  // openPath needs a proper file:// URL on all platforms
+  const url = filePath.startsWith("file://")
+    ? filePath
+    : "file:///" + filePath.replace(/\\/g, "/").replace(/^\/+/, "");
+  await openPath(url);
 }
 
 // ─── Dialog Helpers ────────────────────────────────────────────────────────

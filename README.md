@@ -9,13 +9,20 @@ Built with **Tauri 2**, **React 19**, **TypeScript**, and **Tailwind CSS v4**.
 ## Features
 
 - **Visual drag-and-drop editor** — drag components from the palette onto the canvas and reorder them freely
-- **11 block types** — Heading, Text, Button, Image, Gallery, Container, Two-Column, Three-Column, Contact Form, Navigation, Footer
+- **19 block types** — Heading, Text, Button, Image, Gallery, Hero, Slide Banner, Video, Divider/Spacer, Icon, Map, Testimonial, Pricing Table, Container, Two-Column, Three-Column, Contact Form, Navigation, Footer
 - **Multi-page projects** — create and manage multiple pages per project, each with its own sections and blocks
+- **Global sections** — mark a Navigation or Footer section as global to sync it automatically across all pages
 - **Theme editor** — global color palette, typography (font family, sizes), spacing, border radius, and max-width
+- **Per-block corner radius** — override the global border radius on individual blocks
 - **Properties panel** — inline property editing for every block type (text, colors, alignment, links, …)
-- **HTML export** — generates clean, self-contained HTML + CSS files ready to upload
+- **Contact form** — supports Formspree, Netlify Forms, and Mailto submit modes; field types include text, email, tel, textarea, date, time, number, URL, and dropdown (select)
+- **HTML export** — generates clean, self-contained HTML + CSS files ready to upload; optional minification
 - **FTP deploy** — deploy directly to any FTP/FTPS server from within the app
+- **Netlify deploy** — one-click deploy to Netlify via drag-and-drop API
+- **Auto-updater** — built-in update notifications via the Tauri updater plugin (signed releases)
 - **Project persistence** — projects are saved as `.stackpage` JSON files on disk; fully offline
+- **Undo / Redo** — full history for all project mutations (Ctrl+Z / Ctrl+Y)
+- **Keyboard shortcuts** — Delete to remove selected block, Escape to deselect, Shift+click for multi-select
 
 ---
 

@@ -150,9 +150,11 @@ export interface GalleryBlock extends BaseBlock {
 export interface FormField {
   id: string;
   label: string;
-  type: "text" | "email" | "tel" | "textarea";
+  type: "text" | "email" | "tel" | "textarea" | "date" | "time" | "datetime-local" | "number" | "url" | "select";
   placeholder?: string;
   required: boolean;
+  /** Comma-separated options for select fields */
+  selectOptions?: string;
 }
 export type ContactFormSubmitMode = "formspree" | "netlify" | "mailto";
 export interface ContactFormProps {
