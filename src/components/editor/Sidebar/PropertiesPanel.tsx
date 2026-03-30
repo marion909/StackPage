@@ -1379,7 +1379,7 @@ export default function PropertiesPanel({ block, pageId, sectionId }: Props) {
                   <button onClick={() => update({ items: block.props.items.filter((_, i) => i !== idx) })} className="text-[10px] text-red-400 hover:text-red-600 self-end">Remove</button>
                 </div>
               ))}
-              <button onClick={() => { const { nanoid: n } = require("nanoid"); update({ items: [...block.props.items, { id: Math.random().toString(36).slice(2), question: "New Question", answer: "Answer here", open: false }] }); }} className="text-xs text-[#2563eb] hover:text-[#1d4ed8] border border-dashed border-[#bfdbfe] rounded py-1">+ Add Item</button>
+              <button onClick={() => { update({ items: [...block.props.items, { id: Math.random().toString(36).slice(2), question: "New Question", answer: "Answer here", open: false }] }); }} className="text-xs text-[#2563eb] hover:text-[#1d4ed8] border border-dashed border-[#bfdbfe] rounded py-1">+ Add Item</button>
             </div>
           </Field>
         </>

@@ -38,7 +38,7 @@ interface ProjectState {
   // Blocks
   addBlock: (pageId: string, sectionId: string, block: Block) => void;
   updateBlock: (pageId: string, sectionId: string, blockId: string, props: Partial<Block["props"]>) => void;
-  patchBlock: (pageId: string, sectionId: string, blockId: string, patch: Partial<Pick<Block, "cornerRadius">>) => void;
+  patchBlock: (pageId: string, sectionId: string, blockId: string, patch: Partial<Pick<Block, "cornerRadius" | "animation" | "customCss" | "notes">>) => void;
   deleteBlock: (pageId: string, sectionId: string, blockId: string) => void;
   deleteBlocks: (pageId: string, sectionId: string, blockIds: string[]) => void;
   duplicateBlock: (pageId: string, sectionId: string, blockId: string) => void;
